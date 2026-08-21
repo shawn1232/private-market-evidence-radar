@@ -1,0 +1,111 @@
+{
+  "synthetic": true,
+  "demo_notice": "SYNTHETIC DEMO DATA - NOT A REAL COMPANY, SOURCE, OR INVESTMENT RECOMMENDATION",
+  "report": {
+    "synthetic": true,
+    "is_demo": true,
+    "generated_at": "__GENERATED_AT__",
+    "thesis": "合成演示：早期精密检测与微纳器件",
+    "scoring_version": "dealscope-synthetic-demo-v1",
+    "meta": {
+      "is_demo": true,
+      "synthetic": true,
+      "headline": "合成演示报告",
+      "generated_at": "__GENERATED_AT__",
+      "notice": "All entities, claims, quotes, scores, and URLs are synthetic."
+    },
+    "search_strategy": {
+      "providers_used": [
+        "synthetic_fixture"
+      ]
+    },
+    "total_evidence": 2,
+    "candidates": [
+      {
+        "entity": "澄光微纳（虚构）",
+        "summary": "纯合成示例：客户验证出现进展，但商业化、财务与独立确认信息不足，建议仅作为界面与数据契约演示。",
+        "total_score": 57,
+        "opportunity_score": 57,
+        "confidence_score": 42,
+        "priority_score": 49,
+        "score_bucket": "合成演示｜需继续核实",
+        "dimension_scores": {
+          "sector_prosperity": 7,
+          "profit_pool": 5,
+          "high_end_attribute": 4,
+          "customer_validation": 9,
+          "commercialization_progress": 6,
+          "investability": 10,
+          "exit_feasibility": 5,
+          "competitive_position": 6,
+          "information_sufficiency": 5
+        },
+        "confidence_levels": {
+          "sector_prosperity": "low",
+          "profit_pool": "low",
+          "high_end_attribute": "low",
+          "customer_validation": "medium",
+          "commercialization_progress": "low",
+          "investability": "low",
+          "exit_feasibility": "low",
+          "competitive_position": "low",
+          "information_sufficiency": "low"
+        },
+        "diagnostics": {
+          "evidence_strength": 30,
+          "freshness_score": 100,
+          "traceability_score": 100,
+          "source_authority_score": 0,
+          "cross_validation_score": 0,
+          "evidence_chain_score": 20,
+          "data_quality": 35,
+          "execution_readiness": 20,
+          "confidence_index": 42,
+          "social_dependency_ratio": 0,
+          "signal_stats": {
+            "official_anchor_count": 0,
+            "authoritative_evidence_count": 0,
+            "cross_provider_evidence_count": 0,
+            "multi_provider_retrieval_count": 1,
+            "independently_corroborated_count": 0,
+            "corroborated_claim_count": 0
+          }
+        },
+        "risk_summary": {
+          "high": 0,
+          "medium": 2,
+          "low": 0,
+          "total": 2
+        },
+        "evidence": [
+          {
+            "claim_type": "commercial_signal",
+            "platform": "synthetic_demo",
+            "source_tier": "unknown",
+            "importance": 3,
+            "quote": "这是专为界面演示编写的合成引文，不对应任何真实网页或商业事实。",
+            "source_url": "https://source.example.invalid/dealscope/synthetic/chenguang-validation",
+            "traceability": "synthetic_fixture",
+            "provider": "synthetic_fixture",
+            "provider_count": 1,
+            "published_at": "__EVENT_DATE_1__",
+            "synthetic": true
+          },
+          {
+            "claim_type": "risk_signal",
+            "platform": "synthetic_demo",
+            "source_tier": "unknown",
+            "importance": 2,
+            "quote": "合成示例明确保留了客户身份、合同金额和回款安排三个待核实项。",
+            "source_url": "https://risk.example.invalid/dealscope/synthetic/chenguang-gaps",
+            "traceability": "synthetic_fixture",
+            "provider": "synthetic_fixture",
+            "provider_count": 1,
+            "published_at": "__EVENT_DATE_1__",
+            "synthetic": true
+          }
+        ]
+      }
+    ]
+  }
+}

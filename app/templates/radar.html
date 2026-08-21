@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DealScope｜一级市场证据雷达</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d5b3e'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='25' font-family='Arial' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="{{ url_for('static', filename='radar.css') }}">
+</head>
+<body data-refreshing="{{ 'true' if runtime.refreshing else 'false' }}" data-candidate-count="{{ report.candidate_count }}">
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">DS</span>
+        <div>
+          <div class="eyebrow">DEALSCOPE · PRIMARY MARKET EVIDENCE</div>
+          <h1>一级市场证据雷达</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="button secondary" href="{{ workbench_home_url }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;text-decoration:none;">证据评估工作台</a>
+        <button class="button secondary" type="button" data-open-wechat><span id="wechatLibraryButtonLabel">公众号文章库</span></button>
+        <button class="button primary" id="refreshButton" type="button">
+          <span class="button-dot" aria-hidden="true"></span>
+          <span id="refreshLabel">更新近 7 天</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="thesis-panel">
+        <div class="thesis-copy">
+          <div class="section-kicker">本周只回答一个问题</div>
+          <p>哪些可追溯的新事件，使一个项目需要进入待核验清单？</p>
+        </div>
+        <div class="window-box">
+          <div class="window-label">检索窗口 · {{ report.timezone }}</div>
+          <div class="window-dates">
+            <time>{{ report.window_start }}</time>
+            <span>→</span>
+            <time>{{ report.window_end }}</time>
+          </div>
+          <div class="run-state state-{{ report.run_state }}">
+            <span class="state-dot" aria-hidden="true"></span>
+            {{ report.run_message }}
+          </div>
+          <div class="run-state {{ 'state-error' if report.is_stale else 'state-ok' }}" style="margin-top:14px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.09);">
+            <span class="state-dot" aria-hidden="true"></span>
+            <div>
+              <strong>{{ report.freshness_label }}</strong>
+              {% if report.is_stale %}<div>当前卡片仅供回看，不代表最近 7 天；系统会尝试更新，也可手动点击更新。</div>{% endif %}
+            </div>
+          </div>
+          {% set last_attempt = runtime.last_attempt or {} %}
+          <div id="refreshAttempt" class="run-state {{ 'state-error' if last_attempt.get('ok') == false else 'state-ok' }}" style="margin-top:10px;" {% if not last_attempt %}hidden{% endif %}>
+            <span class="state-dot" aria-hidden="true"></span>
+            <span id="refreshAttemptText">
+              {% if last_attempt %}最近一次刷新：{{ last_attempt.get('message', '状态待确认') }}{% if last_attempt.get('error_detail') %}｜{{ last_attempt.get('error_detail') }}{% endif %}{% endif %}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="source-strip" aria-label="信源状态">
+        {% set web_status = report.source_status.get('google_news', {}) %}
+        {% set wx_status = report.source_status.get('wechat', {}) %}
+        {% set wx_followup = wx_status.get('followup_news', {}) %}
+        <div class="source-summary">
+          <span class="source-title">本轮信源</span>
+          <span class="source-pill">
+            公开网页 / 新闻索引{% if web_status.get('queries_total') %}：{{ web_status.get('queries_succeeded', 0) }}/{{ web_status.get('queries_total') }} 组可用{% endif %}
+          </span>
+          <button class="source-pill source-pill-button{% if wx_status.get('status') == 'skipped' %} muted{% endif %}" id="wechatPoolPill" type="button" data-open-wechat data-wechat-open-tab="library">
+            <span id="wechatPoolSummary">公众号文章库：正在读取…</span>
+          </button>
+          <span class="source-pill muted" id="wechatDiscoverySummary">全网发现：正在读取…</span>
+          {% if wx_followup.get('queries_total') %}
+          <span class="source-pill muted">公众号带动复核：{{ wx_followup.get('items_seen', 0) }} 条公开结果</span>
+          {% endif %}
+          <button class="source-pill source-pill-button discovery-pill" type="button" data-wechat-discover>全网拓源一次</button>
+        </div>
+        <div class="source-note">
+          公众号来源由主动全网发现与手工补充共同构成；发现只是线索，未取得正文和真实发布日期不会进入七日评分。
+        </div>
+      </section>
+
+      <section class="result-heading">
+        <div>
+          <div class="section-kicker">WEEKLY EVIDENCE QUEUE</div>
+          <h2>本期待核验的 5 个位置</h2>
+        </div>
+        <p>
+          {% if report.candidate_count == 5 %}
+            已找到 5 个有明确周度事件标题的项目线索；核验状态见卡片右上角。
+          {% elif report.candidate_count > 0 %}
+            本期仅 {{ report.candidate_count }} 个达到展示门槛；空位不以旧项目或弱信号补齐。
+          {% else %}
+            尚无可展示项目；首次启动正在检索，或本期没有达到门槛的变化。
+          {% endif %}
+        </p>
+      </section>
+
+      <section class="cards" id="projectCards">
+        {% for item in report.candidates %}
+        <article class="project-card{% if loop.first %} featured{% endif %}">
+          <div class="card-topline">
+            <div class="rank">{{ '%02d'|format(item.rank) }}</div>
+            <div class="decision">{{ item.decision }}</div>
+            <div class="verification{% if item.verified %} verified{% endif %}">
+              <span aria-hidden="true"></span>{{ item.verification }}
+            </div>
+          </div>
+
+          <div class="company-row">
+            <div>
+              <h3>{{ item.company_name }}</h3>
+              <div class="legal-entity">{{ item.legal_entity }}</div>
+            </div>
+            <div class="variable-tag">{{ item.core_variable }}</div>
+          </div>
+
+          <div class="event-block">
+            <div class="fact-label">近 7 天发生的变化</div>
+            <p class="event-fact">{{ item.event_fact }}</p>
+            <div class="event-date">{{ item.event_date }} · {{ item.date_basis }}</div>
+          </div>
+
+          <div class="state-transition" aria-label="核心状态变化">
+            <div class="state-cell">
+              <span>此前</span>
+              <strong>{{ item.before_state }}</strong>
+            </div>
+            <div class="transition-arrow" aria-hidden="true">→</div>
+            <div class="state-cell after">
+              <span>现在</span>
+              <strong>{{ item.after_state }}</strong>
+            </div>
+          </div>
+
+          <blockquote class="admission">{{ item.admission_sentence }}</blockquote>
+
+          <div class="fit-row">
+            <span class="fit-label">研究标签</span>
+            {% for tag in item.fit_tags %}<span class="fit-tag">{{ tag }}</span>{% endfor %}
+            {% if not item.fit_tags %}<span class="fit-tag subdued">标签待核实</span>{% endif %}
+            <a href="{{ item.workbench_url }}" target="_blank" rel="noopener noreferrer" style="margin-left:auto;color:#0d5b3e;font-size:11px;font-weight:800;text-decoration:none;">带入证据评估 ↗</a>
+          </div>
+
+          <details class="evidence">
+            <summary>
+              <span>查看最强证据</span>
+              <span class="evidence-meta">{{ item.publisher }} · {{ item.published_at }}</span>
+            </summary>
+            <div class="evidence-body">
+              <div class="evidence-source">
+                <span>{{ item.publisher_type }}</span>
+                {% if item.source_url %}
+                <a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">打开原文 ↗</a>
+                {% endif %}
+              </div>
+              <div class="source-headline">{{ item.source_title }}</div>
+              <p class="exact-quote">“{{ item.source_quote }}”</p>
+              <div class="corroboration">
+                {% if item.corroborated %}已有独立来源交叉确认{% else %}尚无独立来源交叉确认{% endif %}
+              </div>
+            </div>
+          </details>
+
+          <div class="action-grid">
+            <div>
+              <span>唯一关键未知</span>
+              <p>{{ item.key_unknown }}</p>
+            </div>
+            <div>
+              <span>下一步只核实</span>
+              <p>{{ item.next_action }}</p>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+
+        {% for slot in report.empty_slots %}
+        <article class="project-card empty-card">
+          <div class="card-topline">
+            <div class="rank">{{ '%02d'|format(slot) }}</div>
+            <div class="decision muted-decision">保留空位</div>
+          </div>
+          <div class="empty-content">
+            <div class="empty-symbol" aria-hidden="true">＋</div>
+            <h3>本期无合格项目</h3>
+            <p>没有用旧闻、泛宣传或无法确认主体的材料凑数。</p>
+          </div>
+        </article>
+        {% endfor %}
+      </section>
+
+      <footer>
+        <span>生成时间：{{ report.generated_at }}</span>
+        <span>仅用于公开信息整理与证据核验，不构成投资建议、估值意见或交易依据。</span>
+      </footer>
+    </main>
+  </div>
+
+  <dialog id="wechatDialog" class="source-dialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" value="cancel" aria-label="关闭公众号文章库">×</button>
+      <div class="section-kicker">WECHAT ARTICLE LIBRARY</div>
+      <h2>公众号文章库</h2>
+      <p class="dialog-intro">系统可以主动从全网发现公众号文章线索，也支持粘贴原文或导入 exporter 历史文件；七日雷达只使用已取得正文和真实发布日期的文章。</p>
+
+      <div class="pool-stats" id="wechatPoolStats" aria-label="公众号文章库统计">
+        <div class="pool-stat"><span>已收录</span><strong id="wechatStatTotal">—</strong></div>
+        <div class="pool-stat"><span>本周文章</span><strong id="wechatStatWindow">—</strong></div>
+        <div class="pool-stat"><span>待读取</span><strong id="wechatStatPending">—</strong></div>
+        <div class="pool-stat"><span>读取失败</span><strong id="wechatStatFailed">—</strong></div>
+      </div>
+
+      <section class="discovery-panel" aria-label="公众号主动拓源">
+        <div class="discovery-copy">
+          <div class="discovery-title-row">
+            <strong>主动全网发现</strong>
+            <span class="evidence-boundary-badge">发现 ≠ 证据</span>
+          </div>
+          <p>主动寻找新的公众号文章与账号线索；只有成功取得正文和真实发布日期，才可能进入七日评分。</p>
+          <div class="discovery-metrics">
+            <span>已发现线索 <strong id="wechatDiscoveredTotal">—</strong></span>
+            <span>涉及公众号 <strong id="wechatDiscoveredAccounts">—</strong></span>
+            <span>本周发现 <strong id="wechatDiscoveredWindow">—</strong></span>
+          </div>
+          <div class="discovery-last-run" id="wechatLastDiscovery">尚未进行主动拓源</div>
+        </div>
+        <button class="button primary" type="button" data-wechat-discover>全网拓源一次</button>
+      </section>
+
+      <div class="pool-tabs" role="tablist" aria-label="公众号文章库操作">
+        <button class="pool-tab active" id="wechatTabUrls" type="button" role="tab" aria-selected="true" aria-controls="wechatPanelUrls" data-wechat-tab="urls">粘贴文章链接</button>
+        <button class="pool-tab" id="wechatTabImport" type="button" role="tab" aria-selected="false" aria-controls="wechatPanelImport" data-wechat-tab="import">导入历史文件</button>
+        <button class="pool-tab" id="wechatTabLibrary" type="button" role="tab" aria-selected="false" aria-controls="wechatPanelLibrary" data-wechat-tab="library">查看文章库</button>
+      </div>
+
+      <section class="pool-panel" id="wechatPanelUrls" role="tabpanel" aria-labelledby="wechatTabUrls" data-wechat-panel="urls">
+        <label for="wechatUrls">公众号文章链接（每行一个，最多 500 条）</label>
+        <textarea id="wechatUrls" rows="7" placeholder="https://mp.weixin.qq.com/s/..."></textarea>
+        <p class="field-help">加入文章库后，系统会在刷新雷达时读取标题、正文和真实发布日期；重复链接不会重复保存。</p>
+        <div class="dialog-actions">
+          <button class="button primary" id="saveWechatButton" type="button">加入文章库</button>
+        </div>
+      </section>
+
+      <section class="pool-panel" id="wechatPanelImport" role="tabpanel" aria-labelledby="wechatTabImport" data-wechat-panel="import" hidden>
+        <label for="wechatImportFile">exporter 历史文件</label>
+        <div class="file-drop" id="wechatImportDrop">
+          <input id="wechatImportFile" type="file" accept=".json,.csv,application/json,text/csv">
+          <strong>选择 JSON 或 CSV 文件</strong>
+          <span>先预览识别结果，确认后才写入文章库；文件只在本机处理，不会上传到外部服务。</span>
+        </div>
+        <p class="field-help">
+          还没有历史文件？<a href="https://down.mptext.top" target="_blank" rel="noopener noreferrer">打开公众号历史导出器 ↗</a>。扫码和选择公众号必须由你本人完成；雷达不会读取或保存登录凭据。
+        </p>
+        <div class="import-preview" id="wechatImportPreview" hidden>
+          <strong>导入预览</strong>
+          <p id="wechatImportPreviewSummary"></p>
+          <ul id="wechatImportIssues"></ul>
+        </div>
+        <div class="dialog-actions">
+          <button class="button secondary" id="previewWechatImportButton" type="button">预览文件</button>
+          <button class="button primary" id="confirmWechatImportButton" type="button" disabled>确认导入</button>
+        </div>
+      </section>
+
+      <section class="pool-panel" id="wechatPanelLibrary" role="tabpanel" aria-labelledby="wechatTabLibrary" data-wechat-panel="library" hidden>
+        <div class="pool-toolbar">
+          <div class="pool-filters" role="group" aria-label="筛选文章">
+            <button class="pool-filter active" type="button" data-wechat-scope="all">全部</button>
+            <button class="pool-filter" type="button" data-wechat-scope="window">本周</button>
+            <button class="pool-filter" type="button" data-wechat-scope="discovered">全网发现</button>
+            <button class="pool-filter" type="button" data-wechat-scope="pending">待读取</button>
+            <button class="pool-filter" type="button" data-wechat-scope="failed">读取失败</button>
+          </div>
+          <span id="wechatPoolRange" class="pool-range"></span>
+        </div>
+        <div class="pool-table-wrap">
+          <table class="pool-table">
+            <thead><tr><th>文章</th><th>公众号</th><th>发布日期</th><th>来源 / 发现线索</th><th>状态</th><th></th></tr></thead>
+            <tbody id="wechatPoolRows"><tr><td colspan="6" class="pool-empty">正在读取文章库…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pool-pagination">
+          <button class="button secondary compact" id="wechatPoolPrev" type="button" disabled>上一页</button>
+          <button class="button secondary compact" id="wechatPoolNext" type="button" disabled>下一页</button>
+        </div>
+      </section>
+
+      <div class="dialog-warning boundary-note">
+        文章库汇集主动发现、手工加入和历史文件导入。全网发现只是线索，不代表已核验证据，也不代表账号全量历史；未取得正文或真实发布日期的文章不会进入七日评分。主动拓源不会触发扫码、登录，也不会自动拉取公众号账号全量历史。
+      </div>
+      <div id="wechatMessage" class="form-message" role="status" aria-live="polite"></div>
+      <div class="dialog-actions dialog-footer">
+        <button class="button secondary" id="refreshAfterWechatButton" type="button" hidden>立即更新雷达</button>
+        <button class="button secondary" value="cancel">关闭</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="{{ url_for('static', filename='radar.js') }}"></script>
+</body>
+</html>

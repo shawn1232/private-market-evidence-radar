@@ -1,0 +1,177 @@
+[
+  {
+    "name": "搜狗微信文章",
+    "group": "微信/公众号",
+    "template": "https://weixin.sogou.com/weixin?type=2&query={query}"
+  },
+  {
+    "name": "搜狗网页-公众号原文",
+    "group": "微信/公众号",
+    "template": "https://www.sogou.com/web?query=site%3Amp.weixin.qq.com%20{query}"
+  },
+  {
+    "name": "Bing-公众号原文",
+    "group": "微信/公众号",
+    "template": "https://www.bing.com/search?q=site%3Amp.weixin.qq.com+{query}"
+  },
+  {
+    "name": "Bing-视频号/公众号生态",
+    "group": "微信/公众号",
+    "template": "https://www.bing.com/search?q=site%3Achannels.weixin.qq.com+OR+site%3Amp.weixin.qq.com+{query}"
+  },
+  {
+    "name": "微信开放平台",
+    "group": "微信/公众号",
+    "template": "https://www.bing.com/search?q=site%3Adevelopers.weixin.qq.com+OR+site%3Aopen.weixin.qq.com+{query}"
+  },
+  {
+    "name": "搜狗网页-小红书",
+    "group": "小红书",
+    "template": "https://www.sogou.com/web?query=site%3Axiaohongshu.com%20{query}"
+  },
+  {
+    "name": "Bing-小红书",
+    "group": "小红书",
+    "template": "https://www.bing.com/search?q=site%3Axiaohongshu.com+{query}"
+  },
+  {
+    "name": "小红书发现页",
+    "group": "小红书",
+    "template": "https://www.xiaohongshu.com/explore"
+  },
+  {
+    "name": "小红书小程序/开放能力",
+    "group": "小红书",
+    "template": "https://www.bing.com/search?q=site%3Aminiapp.xiaohongshu.com+{query}"
+  },
+  {
+    "name": "搜狗网页-知识星球",
+    "group": "知识星球/知识社区",
+    "template": "https://www.sogou.com/web?query=site%3Azsxq.com%20{query}"
+  },
+  {
+    "name": "Bing-知识星球",
+    "group": "知识星球/知识社区",
+    "template": "https://www.bing.com/search?q=site%3Azsxq.com+OR+site%3Adoc.zsxq.com+{query}"
+  },
+  {
+    "name": "Bing-语雀/飞书/FlowUs/Notion",
+    "group": "知识星球/知识社区",
+    "template": "https://www.bing.com/search?q=site%3Ayuque.com+OR+site%3Afeishu.cn+OR+site%3Aflowus.cn+OR+site%3Anotion.site+{query}"
+  },
+  {
+    "name": "知识星球官网",
+    "group": "知识星球/知识社区",
+    "template": "https://www.zsxq.com/"
+  },
+  {
+    "name": "Bing-企业官网",
+    "group": "企业/官方",
+    "template": "https://www.bing.com/search?q={query}+官网"
+  },
+  {
+    "name": "Bing-产品/解决方案",
+    "group": "企业/官方",
+    "template": "https://www.bing.com/search?q={query}+产品+解决方案+官网"
+  },
+  {
+    "name": "Bing-客户/案例",
+    "group": "企业/官方",
+    "template": "https://www.bing.com/search?q={query}+客户+案例"
+  },
+  {
+    "name": "Bing-融资",
+    "group": "工商/融资",
+    "template": "https://www.bing.com/search?q={query}+融资+轮次+投资方"
+  },
+  {
+    "name": "Bing-IT桔子/投中/清科",
+    "group": "工商/融资",
+    "template": "https://www.bing.com/search?q=site%3Aitjuzi.com+OR+site%3Apedaily.cn+OR+site%3Apedata.cn+OR+site%3Achinaventure.com.cn+{query}"
+  },
+  {
+    "name": "Bing-天眼查/企查查",
+    "group": "工商/融资",
+    "template": "https://www.bing.com/search?q=site%3Atianyancha.com+OR+site%3Aqcc.com+{query}"
+  },
+  {
+    "name": "Bing-股东/工商变更",
+    "group": "工商/融资",
+    "template": "https://www.bing.com/search?q={query}+股东+工商变更+增资"
+  },
+  {
+    "name": "Bing-政策",
+    "group": "政策/监管",
+    "template": "https://www.bing.com/search?q={query}+政策+工信部+发改委"
+  },
+  {
+    "name": "Bing-标准/法规",
+    "group": "政策/监管",
+    "template": "https://www.bing.com/search?q={query}+标准+site%3Astd.samr.gov.cn+OR+site%3Aopenstd.samr.gov.cn"
+  },
+  {
+    "name": "Bing-政府/监管原文",
+    "group": "政策/监管",
+    "template": "https://www.bing.com/search?q=site%3Agov.cn+OR+site%3Amiit.gov.cn+OR+site%3Andrc.gov.cn+{query}"
+  },
+  {
+    "name": "Bing-招投标/采购",
+    "group": "招聘/招投标",
+    "template": "https://www.bing.com/search?q={query}+中标+招标+采购"
+  },
+  {
+    "name": "Bing-中国政府采购网",
+    "group": "招聘/招投标",
+    "template": "https://www.bing.com/search?q=site%3Accgp.gov.cn+{query}"
+  },
+  {
+    "name": "Bing-BOSS/猎聘/拉勾",
+    "group": "招聘/招投标",
+    "template": "https://www.bing.com/search?q=site%3Azhipin.com+OR+site%3Aliepin.com+OR+site%3Alagou.com+{query}"
+  },
+  {
+    "name": "Bing-招聘岗位",
+    "group": "招聘/招投标",
+    "template": "https://www.bing.com/search?q={query}+招聘+研发+销售+产品"
+  },
+  {
+    "name": "Bing-专利",
+    "group": "专利/标准",
+    "template": "https://www.bing.com/search?q={query}+专利+发明+PCT"
+  },
+  {
+    "name": "Bing-Google Patents/SooPAT",
+    "group": "专利/标准",
+    "template": "https://www.bing.com/search?q=site%3Apatents.google.com+OR+site%3Asoopat.com+OR+site%3Abaiten.cn+{query}"
+  },
+  {
+    "name": "Bing-学术/论文",
+    "group": "专利/标准",
+    "template": "https://www.bing.com/search?q=site%3Acnki.net+OR+site%3Awanfangdata.com.cn+{query}"
+  },
+  {
+    "name": "Bing-抖音/B站/快手",
+    "group": "视频/社交",
+    "template": "https://www.bing.com/search?q=site%3Adouyin.com+OR+site%3Abilibili.com+OR+site%3Akuaishou.com+{query}"
+  },
+  {
+    "name": "Bing-知乎/微博/雪球/韭研",
+    "group": "视频/社交",
+    "template": "https://www.bing.com/search?q=site%3Azhihu.com+OR+site%3Aweibo.com+OR+site%3Axueqiu.com+OR+site%3Ajiuyangongshe.com+{query}"
+  },
+  {
+    "name": "Bing-GitHub/Gitee/ModelScope",
+    "group": "开发者/供应链",
+    "template": "https://www.bing.com/search?q=site%3Agithub.com+OR+site%3Agitee.com+OR+site%3Amodelscope.cn+{query}"
+  },
+  {
+    "name": "Bing-供应链/海关/进出口",
+    "group": "开发者/供应链",
+    "template": "https://www.bing.com/search?q=site%3Acustoms.gov.cn+OR+site%3A52wmb.com+OR+site%3Aimportgenius.com+{query}"
+  },
+  {
+    "name": "Bing-展会/协会/论坛",
+    "group": "开发者/供应链",
+    "template": "https://www.bing.com/search?q=site%3Agongkong.com+OR+site%3Aca800.com+OR+site%3Acimes.org.cn+OR+site%3Acmes.org+{query}"
+  }
+]

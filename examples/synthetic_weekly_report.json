@@ -1,0 +1,98 @@
+{
+  "synthetic": true,
+  "demo_notice": "SYNTHETIC DEMO DATA - NOT A REAL COMPANY, SOURCE, OR INVESTMENT RECOMMENDATION",
+  "mode": "weekly_event_radar",
+  "window": {
+    "timezone": "Asia/Shanghai",
+    "as_of": "__AS_OF__",
+    "start_date": "__WINDOW_START__",
+    "end_date": "__WINDOW_END__",
+    "days": 7,
+    "boundary": "inclusive"
+  },
+  "status": "ok",
+  "source_status": {
+    "google_news": {
+      "status": "ok",
+      "queries_total": 3,
+      "queries_succeeded": 3,
+      "items_seen": 12,
+      "errors": [],
+      "evidence_policy": "SYNTHETIC: discovery results are leads, not verified facts"
+    },
+    "wechat": {
+      "status": "ok",
+      "pool_total": 6,
+      "in_window": 2,
+      "ready": 2,
+      "pending": 4,
+      "failed": 0,
+      "synthetic": true
+    }
+  },
+  "candidates": [
+    {
+      "company": "澄光微纳（虚构）",
+      "legal_entity": "澄光微纳科技（虚构）有限公司",
+      "event_date": "__EVENT_DATE_1__",
+      "date_basis": "合成演示日期",
+      "event": "【合成】完成首批客户样件验证",
+      "before_state": "处于实验室样件阶段（合成）",
+      "after_state": "完成首批客户样件验证（合成）",
+      "core_variable": "客户验证",
+      "entry_reason": "合成演示：本周出现可指认的客户验证节点，因此进入初筛项目池；该描述不对应任何真实公司。",
+      "fit_tags": [
+        "合成硬科技",
+        "合成早期项目"
+      ],
+      "verification_status": "合成演示，不代表真实证据",
+      "key_unknown": "合成未知项：测试指标、客户身份和后续订单均未核实",
+      "next_verification": "演示动作：取得正式测试报告与客户书面确认",
+      "source": {
+        "title": "【合成文章】澄光微纳完成首批客户样件验证",
+        "url": "https://source.example.invalid/dealscope/synthetic/chenguang-validation",
+        "publisher": "DealScope 合成信源",
+        "publisher_type": "synthetic_fixture",
+        "published_at": "__EVENT_DATE_1__",
+        "source_type": "synthetic_demo",
+        "evidence_level": "synthetic_only",
+        "verification_status": "合成演示",
+        "exact_quote": "这是专为界面演示编写的合成引文，不对应任何真实网页或商业事实。"
+      },
+      "corroborating_evidence": []
+    },
+    {
+      "company": "云岚精密（虚构）",
+      "legal_entity": "云岚精密装备（虚构）有限公司",
+      "event_date": "__EVENT_DATE_2__",
+      "date_basis": "合成演示日期",
+      "event": "【合成】交付首套精密检测样机",
+      "before_state": "完成工程样机开发（合成）",
+      "after_state": "交付首套客户测试样机（合成）",
+      "core_variable": "规模化与交付能力",
+      "entry_reason": "合成演示：本周出现首套样机交付节点，因此进入初筛项目池；该描述不对应任何真实公司。",
+      "fit_tags": [
+        "合成先进制造",
+        "合成国产替代"
+      ],
+      "verification_status": "合成演示，不代表真实证据",
+      "key_unknown": "合成未知项：验收标准、交付金额和回款安排均未核实",
+      "next_verification": "演示动作：核对验收单、合同与回款计划",
+      "source": {
+        "title": "【合成文章】云岚精密交付首套检测样机",
+        "url": "https://source.example.invalid/dealscope/synthetic/yunlan-delivery",
+        "publisher": "DealScope 合成信源",
+        "publisher_type": "synthetic_fixture",
+        "published_at": "__EVENT_DATE_2__",
+        "source_type": "synthetic_demo",
+        "evidence_level": "synthetic_only",
+        "verification_status": "合成演示",
+        "exact_quote": "本句为纯合成演示文本，仅用于验证证据卡片的显示与状态边界。"
+      },
+      "corroborating_evidence": []
+    }
+  ],
+  "empty_slots": 3,
+  "generated_at": "__GENERATED_AT__",
+  "method": "synthetic_demo_event_first_no_total_score"
+}

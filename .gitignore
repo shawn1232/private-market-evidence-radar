@@ -1,0 +1,96 @@
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+keys/
+private_keys/
+.secrets/
+id_rsa*
+id_ed25519*
+credentials*.json
+secrets*.json
+auth*.json
+cookies*.json
+*.cookie
+
+# Runtime databases and streams
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.db
+*.db-*
+*.jsonl
+
+# Runtime data: keep directory documentation/placeholders only
+data/**
+!data/**/
+!data/**/.gitkeep
+!data/**/README.md
+!data/**/README.txt
+
+# Local state and generated output
+sessions/
+logs/
+log/
+output/
+outputs/
+*.log
+*.pid
+*.tmp
+
+# Agent and local-tool state
+.claude/
+.codex/
+_task*
+_result*
+worktrees/
+_wt/
+
+# Playwright products
+.playwright-cli/
+.playwright-browsers/
+playwright-report/
+test-results/
+blob-report/
+output/playwright/
+
+# Local-only configuration overrides
+config/*.local.json
+config/local_*.json
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Public documentation is not ignored. Synthetic JSONL fixtures may be kept
+# under examples/ or docs/, while key/certificate/database files stay ignored.
+!examples/**/*.jsonl
+!docs/**/*.jsonl
