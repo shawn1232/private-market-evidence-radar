@@ -11,9 +11,9 @@ DealScope 面向一级市场项目初筛。它不尝试“自动给出投资答�
 
 ## 在线体验
 
-**[打开 DealScope 只读在线演示 →](https://dealscope-evidence-radar.sage-bard-2259.chatgpt.site)**
+**[打开 DealScope 只读在线演示 →](https://shawn1232.github.io/private-market-evidence-radar/)**
 
-在线站点包含“周度雷达、主动拓源、证据深评”三个可交互视图；无需登录，且只使用纯合成数据。
+在线站点由 GitHub Pages 静态托管，包含“周度雷达、主动拓源、证据深评”三个可交互视图；无需登录、无需后端，且只使用纯合成数据。
 
 ![DealScope synthetic weekly evidence radar](docs/assets/dealscope-radar-synthetic.png)
 

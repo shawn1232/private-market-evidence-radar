@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="DealScope：证据优先的一级市场项目发现与核验在线演示。">
+  <meta name="theme-color" content="#075b3f">
+  <meta property="og:title" content="DealScope｜一级市场证据雷达">
+  <meta property="og:description" content="把公开搜索线索、原文证据与结构化初筛严格分开。">
+  <meta property="og:image" content="assets/dealscope-radar-synthetic.png">
+  <title>DealScope｜AI 一级市场项目发现与证据核验平台</title>
+  <link rel="stylesheet" href="assets/demo.css">
+  <script defer src="assets/demo.js"></script>
+</head>
+<body>
+  <main class="site-shell">
+    <div class="demo-banner">
+      <span>纯合成数据</span>
+      <p>这是用于求职展示的只读在线演示，不连接真实项目、账号或数据库。</p>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="DealScope 首页">
+        <span class="brand-mark">DS</span>
+        <span><strong>DealScope</strong><small>PRIMARY MARKET EVIDENCE</small></span>
+      </a>
+      <nav aria-label="主要导航">
+        <a href="#contract">证据契约</a>
+        <a href="https://github.com/shawn1232/private-market-evidence-radar" target="_blank" rel="noreferrer">查看源码 ↗</a>
+      </nav>
+    </header>
+
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <p class="eyebrow">AI 一级市场项目发现与证据核验平台</p>
+        <h1>不是自动荐项目，<br>而是把线索变成可审计证据。</h1>
+        <p class="hero-lead">主动发现公开网页与公众号线索，严格区分搜索摘要、已读原文、真实日期和独立确认，再把少量候选送入深度评估。</p>
+        <div class="hero-actions">
+          <button class="primary-action" id="start-demo" type="button">开始在线体验</button>
+          <a class="secondary-action" href="#contract">了解证据边界</a>
+        </div>
+      </div>
+      <div class="hero-proof" aria-label="演示指标">
+        <div><strong>3</strong><span>研究视图</span></div>
+        <div><strong>5</strong><span>证据门禁</span></div>
+        <div><strong>107</strong><span>自动化测试</span></div>
+        <p>Windows + Linux 云端验证通过</p>
+      </div>
+    </section>
+
+    <section class="product-frame" id="demo" aria-label="DealScope 在线演示">
+      <div class="product-tabs" role="tablist" aria-label="演示页面">
+        <button type="button" role="tab" aria-selected="true" class="active" data-tab="radar">
+          <span>周度雷达</span><small>最近 7 天发生了什么</small>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tab="sources">
+          <span>主动拓源</span><small>发现未关注的新来源</small>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tab="evidence">
+          <span>证据深评</span><small>逐条回查事实与缺口</small>
+        </button>
+      </div>
+
+      <div class="view-panel radar-view active-panel" role="tabpanel" data-panel="radar">
+        <div class="view-heading">
+          <div><p class="kicker">WEEKLY EVIDENCE QUEUE</p><h2>本期待核验的 5 个位置</h2></div>
+          <div class="window-card"><span>检索窗口 · Asia/Shanghai</span><strong>2026-08-18 → 2026-08-24</strong><small>数据截至今日 · 合成演示</small></div>
+        </div>
+        <div class="source-strip"><strong>本轮信源</strong><span>公开网页 3/3</span><span>公众号线索 4</span><span>原文就绪 2</span><button type="button" id="refresh-demo">模拟刷新</button></div>
+        <div class="candidate-list">
+          <article class="candidate-card">
+            <div class="candidate-top"><span class="rank">01</span><span>进入待核验清单</span><em>合成演示</em></div>
+            <div class="candidate-title"><div><h3>澄光微纳（虚构）</h3><p>澄光微纳科技（虚构）有限公司</p></div><span>客户验证</span></div>
+            <div class="event-box"><small>近 7 天发生的变化</small><strong>完成首批客户样件验证</strong><span>2026-08-22 · 合成演示日期</span></div>
+            <div class="transition"><div><small>此前</small><b>实验室样件阶段</b></div><span>→</span><div><small>现在</small><b>完成首批客户样件验证</b></div></div>
+            <p class="reason">本周出现可指认的客户验证节点，且原文、日期与主体均可回查，因此进入待核验清单。</p>
+            <div class="candidate-footer"><span class="tag">微纳器件</span><button type="button" data-open-evidence="chenguang">查看证据链 →</button></div>
+          </article>
+          <article class="candidate-card">
+            <div class="candidate-top"><span class="rank">02</span><span>进入待核验清单</span><em>合成演示</em></div>
+            <div class="candidate-title"><div><h3>云岚精密（虚构）</h3><p>云岚精密装备（虚构）有限公司</p></div><span>规模化与交付</span></div>
+            <div class="event-box"><small>近 7 天发生的变化</small><strong>交付首套精密检测样机</strong><span>2026-08-21 · 合成演示日期</span></div>
+            <div class="transition"><div><small>此前</small><b>完成工程样机开发</b></div><span>→</span><div><small>现在</small><b>交付首套客户测试样机</b></div></div>
+            <p class="reason">出现首套样机交付节点；系统保留验收、合同与回款三个待核实项，没有用总分掩盖缺口。</p>
+            <div class="candidate-footer"><span class="tag">高端装备</span><button type="button" data-open-evidence="yunlan">查看证据链 →</button></div>
+          </article>
+          <article class="empty-card"><span>03</span><strong>保留空位</strong><p>不使用旧闻或弱信号凑数。</p></article>
+          <article class="empty-card"><span>04</span><strong>保留空位</strong><p>不使用旧闻或弱信号凑数。</p></article>
+          <article class="empty-card"><span>05</span><strong>保留空位</strong><p>不使用旧闻或弱信号凑数。</p></article>
+        </div>
+      </div>
+
+      <div class="view-panel" role="tabpanel" data-panel="sources" hidden>
+        <div class="view-heading">
+          <div><p class="kicker">ACTIVE SOURCE DISCOVERY</p><h2>主动发现未关注的新来源</h2></div>
+          <div class="mini-stats"><span><b>4</b> 新线索</span><span><b>4</b> 演示公众号</span><span><b>2</b> 原文就绪</span></div>
+        </div>
+        <div class="boundary-callout"><b>发现 ≠ 证据</b><p>搜索标题只负责拓源；缺少正文或真实日期时，不会进入周度评分。</p></div>
+        <div class="filters" role="group" aria-label="线索筛选">
+          <button type="button" class="active" data-filter="all">全部</button>
+          <button type="button" data-filter="ready">原文就绪</button>
+          <button type="button" data-filter="pending">待取证</button>
+        </div>
+        <div class="source-table" role="table" aria-label="合成公众号线索">
+          <div class="source-row source-head" role="row"><span>文章线索</span><span>来源</span><span>触发事件</span><span>状态</span></div>
+          <div class="source-row" role="row" data-source-status="ready"><div><strong>澄光微纳完成首批样件验证（合成）</strong><small>正文与日期已取得</small></div><span>微纳前沿·演示号</span><span>客户验证</span><em class="ready">原文就绪</em></div>
+          <div class="source-row" role="row" data-source-status="ready"><div><strong>云岚精密交付首套检测样机（合成）</strong><small>正文与日期已取得</small></div><span>先进制造·演示号</span><span>首套交付</span><em class="ready">原文就绪</em></div>
+          <div class="source-row" role="row" data-source-status="pending"><div><strong>星涟传感启动新一轮融资（合成）</strong><small>仅搜索标题，正文待取</small></div><span>硬科技观察·演示号</span><span>早期融资</span><em class="pending">待取证</em></div>
+          <div class="source-row" role="row" data-source-status="pending"><div><strong>青屿材料通过客户认证（合成）</strong><small>正文已读，发布日期待核</small></div><span>新材料雷达·演示号</span><span>客户认证</span><em class="pending">待取证</em></div>
+        </div>
+      </div>
+
+      <div class="view-panel" role="tabpanel" data-panel="evidence" hidden>
+        <div class="view-heading">
+          <div><p class="kicker">EVIDENCE DEEP DIVE</p><h2 id="evidence-name">澄光微纳（虚构）</h2><p class="subhead" id="evidence-event">完成首批客户样件验证</p></div>
+          <div class="candidate-switch" aria-label="选择演示候选">
+            <button type="button" class="active" data-candidate="chenguang">澄光微纳</button>
+            <button type="button" data-candidate="yunlan">云岚精密</button>
+          </div>
+        </div>
+        <div class="evidence-grid">
+          <section class="evidence-card primary-evidence"><div class="card-label">最强可回查证据</div><h3>DealScope 合成信源</h3><blockquote id="evidence-quote">“本句为纯合成演示引文：首批工程样件已完成约定测试流程，后续仍需客户书面验收。”</blockquote><div class="evidence-meta"><span>逐字匹配</span><span>主体匹配</span><span>日期在窗口内</span></div><p>演示链接使用保留域名，不指向任何真实网页。</p></section>
+          <section class="evidence-card"><div class="card-label">唯一关键未知</div><h3 id="evidence-unknown">测试指标、客户身份与后续订单尚未独立确认</h3><p>系统不会用综合总分掩盖这个缺口。</p></section>
+          <section class="evidence-card"><div class="card-label">下一步只核实</div><h3 id="evidence-next">取得测试报告与客户书面确认</h3><p>完成这一步后，再决定是否提高证据状态。</p></section>
+        </div>
+        <div class="score-boundary"><span>线索分</span><strong>结构化初筛</strong><p>用于安排核验顺序，不代表估值、收益预测或投资建议。</p></div>
+      </div>
+    </section>
+
+    <section class="contract" id="contract">
+      <div><p class="eyebrow">EVIDENCE CONTRACT</p><h2>面试官真正能看到的工程取舍</h2><p>这套系统重点测试“哪些事情绝不能发生”，而不只是 happy path。</p></div>
+      <div class="gate-list">
+        <div><span>01</span><strong>搜索线索</strong><p>仅标题或摘要</p><em>不能评分</em></div>
+        <div><span>02</span><strong>已读原文</strong><p>保存正文与最终 URL</p><em>等待事实核验</em></div>
+        <div><span>03</span><strong>引文匹配</strong><p>引文可在原文逐字找到</p><em>支持单项事实</em></div>
+        <div><span>04</span><strong>主体匹配</strong><p>事实明确指向目标主体</p><em>进入结构化初筛</em></div>
+        <div><span>05</span><strong>独立确认</strong><p>不同原始来源支持同一事实</p><em>提高置信度</em></div>
+      </div>
+    </section>
+
+    <section class="engineering">
+      <div><p class="eyebrow">RELIABILITY BY DESIGN</p><h2>从线索到页面，每一步都可解释。</h2></div>
+      <div class="engineering-grid">
+        <article><strong>原文优先</strong><p>搜索摘要不能直接抬高评分；引文必须能回到保存的原文。</p></article>
+        <article><strong>日期门禁</strong><p>抓取时间永远不能冒充发布日期或事件发生时间。</p></article>
+        <article><strong>失败降级</strong><p>刷新失败保留最近一次成功结果，并明确显示缓存龄期。</p></article>
+        <article><strong>安全边界</strong><p>公网 URL 校验、重定向复检、凭据字段过滤与本地只读演示。</p></article>
+      </div>
+    </section>
+
+    <footer>
+      <div><strong>DealScope</strong><span>一级市场证据雷达 · 在线只读演示</span></div>
+      <p>所有公司、公众号、事件、引文与指标均为合成数据。不构成投资建议、募资推介或交易依据。</p>
+      <a href="https://github.com/shawn1232/private-market-evidence-radar" target="_blank" rel="noreferrer">GitHub 源码 ↗</a>
+    </footer>
+  </main>
+</body>
+</html>
