@@ -472,18 +472,34 @@ def _refresh_now() -> dict[str, Any]:
                 if 0 <= age_seconds < cooldown:
                     normalized = _normalize_report(cached)
                     retry_after = cooldown - age_seconds
+                    finished_at = datetime.now(_SHANGHAI_TZ).isoformat(timespec="seconds")
+                    message = f"数据已是最新；约 {max(1, (retry_after + 59) // 60)} 分钟后可再次联网更新。"
+                    attempt = {
+                        "ok": True,
+                        "run_state": normalized["run_state"],
+                        "message": message,
+                        "started_at": raw_generated,
+                        "finished_at": finished_at,
+                        "candidate_count": normalized["candidate_count"],
+                        "cached": True,
+                    }
+                    _runtime_state.update(
+                        last_error="",
+                        last_finished_at=finished_at,
+                        last_attempt=attempt,
+                    )
                     return {
                         "ok": True,
                         "busy": False,
                         "cached": True,
                         "run_state": normalized["run_state"],
                         "candidate_count": normalized["candidate_count"],
-                        "message": f"数据已是最新；约 {max(1, (retry_after + 59) // 60)} 分钟后可再次联网更新。",
+                        "message": message,
                         "data_as_of": normalized["data_as_of"],
                         "cache_age_days": normalized["cache_age_days"],
                         "is_stale": normalized["is_stale"],
                         "retry_after_seconds": retry_after,
-                        "last_attempt": _runtime_state.get("last_attempt") or {},
+                        "last_attempt": attempt,
                     }
             except (TypeError, ValueError, OverflowError):
                 pass
