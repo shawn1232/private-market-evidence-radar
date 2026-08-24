@@ -9,6 +9,12 @@ DealScope 面向一级市场项目初筛。它不尝试“自动给出投资答�
 
 > 仓库内的演示公司、公众号、事件、引文和 URL 均为纯合成数据。它们不对应任何真实主体，也不构成投资建议。
 
+## 在线体验
+
+**[打开 DealScope 只读在线演示 →](https://dealscope-evidence-radar.sage-bard-2259.chatgpt.site)**
+
+在线站点包含“周度雷达、主动拓源、证据深评”三个可交互视图；无需登录，且只使用纯合成数据。
+
 ![DealScope synthetic weekly evidence radar](docs/assets/dealscope-radar-synthetic.png)
 
 ## 3 分钟了解项目
