@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from app import radar_app
 import weekly_radar
@@ -20,6 +20,7 @@ class PublicLiveRefreshTests(unittest.TestCase):
             {
                 "DEALSCOPE_MODE": "public_live",
                 "DEALSCOPE_PUBLIC_RSS_ONLY": "1",
+                "DEALSCOPE_PUBLIC_EXA_MCP": "1",
                 "DEALSCOPE_ALLOW_PUBLIC_WECHAT_FALLBACK": "0",
                 "DEALSCOPE_REFRESH_COOLDOWN_SECONDS": "900",
                 "DEALSCOPE_DEEP_BASE_URL": "/workbench/",
@@ -42,6 +43,9 @@ class PublicLiveRefreshTests(unittest.TestCase):
         refresh_tag = re.search(r'<button[^>]+id="refreshButton"[^>]*>', html)
         self.assertIsNotNone(refresh_tag)
         self.assertNotIn("disabled", refresh_tag.group(0))
+        discovery_tags = re.findall(r'<button[^>]+data-wechat-discover[^>]*>', html)
+        self.assertEqual(2, len(discovery_tags))
+        self.assertTrue(all("disabled" not in tag for tag in discovery_tags))
 
         client = radar_app.app.test_client()
         expected = {"ok": True, "busy": False, "candidate_count": 2, "message": "updated"}
@@ -63,15 +67,38 @@ class PublicLiveRefreshTests(unittest.TestCase):
             json={},
             environ_base={"REMOTE_ADDR": "203.0.113.8"},
         )
-        blocked_discovery = client.post(
-            "/api/wechat/discover",
+        discovery_result = {
+            "ok": True,
+            "status": "ok",
+            "message": "全网发现完成",
+            "stats": {"unique_results": 2},
+            "pool_write": {"added": 2, "exists": 0, "errors": 0},
+            "finished_at": "2026-08-24T00:00:00Z",
+        }
+        with (
+            patch.object(radar_app, "discover_wechat_sources", return_value=discovery_result) as discover,
+            patch.object(radar_app, "_get_wechat_pool", return_value=object()),
+            patch.object(radar_app, "_wechat_stats", return_value={"total": 2}),
+        ):
+            allowed_discovery = client.post(
+                "/api/wechat/discover",
+                base_url="https://dealscope.example",
+                headers={"Origin": "https://dealscope.example"},
+                json={},
+                environ_base={"REMOTE_ADDR": "203.0.113.8"},
+            )
+        blocked_add = client.post(
+            "/api/wechat/add",
             base_url="https://dealscope.example",
             headers={"Origin": "https://dealscope.example"},
-            json={},
+            json={"url": "https://mp.weixin.qq.com/s/example"},
             environ_base={"REMOTE_ADDR": "203.0.113.8"},
         )
         self.assertEqual(blocked_cross_origin.status_code, 403)
-        self.assertEqual(blocked_discovery.status_code, 403)
+        self.assertEqual(allowed_discovery.status_code, 200)
+        self.assertEqual(2, allowed_discovery.get_json()["pool_write"]["added"])
+        discover.assert_called_once_with(force=False, pool=ANY)
+        self.assertEqual(blocked_add.status_code, 403)
 
     def test_public_refresh_cooldown_reuses_current_real_report(self) -> None:
         report = weekly_radar._no_cache_report(weekly_radar._load_config())

@@ -38,7 +38,7 @@
           <span>页面、路由和数据标准化逻辑与本地工作台相同；当前公开访问固定使用合成数据。</span>
           {% endif %}
         </div>
-        <div class="source-note" style="color:#1e40af;">个人账号、Cookie 和本地研究资料不会上传；公众号原文导入、删除与登录仍仅在本地完整版开放。</div>
+        <div class="source-note" style="color:#1e40af;">个人账号、Cookie 和本地研究资料不会上传；公开版公众号拓源仅保存文章链接和搜索元数据，原文导入、删除与登录仍仅在本地完整版开放。</div>
       </section>
       {% endif %}
       <section class="thesis-panel">
@@ -90,7 +90,7 @@
           {% if wx_followup.get('queries_total') %}
           <span class="source-pill muted">公众号带动复核：{{ wx_followup.get('items_seen', 0) }} 条公开结果</span>
           {% endif %}
-          <button class="source-pill source-pill-button discovery-pill" type="button" data-wechat-discover {% if public_cloud %}disabled title="公众号主动拓源仍在本地完整版运行"{% endif %}>全网拓源一次</button>
+          <button class="source-pill source-pill-button discovery-pill" type="button" data-wechat-discover {% if public_readonly %}disabled title="只读演示不运行联网拓源"{% endif %}>全网拓源一次</button>
         </div>
         <div class="source-note">
           公众号来源由主动全网发现与手工补充共同构成；发现只是线索，未取得正文和真实发布日期不会进入七日评分。
@@ -219,7 +219,7 @@
       <button class="dialog-close" value="cancel" aria-label="关闭公众号文章库">×</button>
       <div class="section-kicker">WECHAT ARTICLE LIBRARY</div>
       <h2>公众号文章库</h2>
-      <p class="dialog-intro">{% if public_cloud %}公开在线版不会上传你的公众号账号、Cookie 或历史文件，因此这里保持为空；公众号原文池、写入与主动拓源仍在本地完整版运行。{% else %}系统可以主动从全网发现公众号文章线索，也支持粘贴原文或导入 exporter 历史文件；七日雷达只使用已取得正文和真实发布日期的文章。{% endif %}</p>
+      <p class="dialog-intro">{% if public_live %}公开在线版可通过预设、限量的全网搜索发现公众号文章链接；只保存链接与搜索来源，不上传你的公众号账号、Cookie 或历史文件。原文导入与写入仍在本地完整版运行。{% elif public_readonly %}当前是纯只读演示，不运行联网拓源或写入。{% else %}系统可以主动从全网发现公众号文章线索，也支持粘贴原文或导入 exporter 历史文件；七日雷达只使用已取得正文和真实发布日期的文章。{% endif %}</p>
 
       <div class="pool-stats" id="wechatPoolStats" aria-label="公众号文章库统计">
         <div class="pool-stat"><span>已收录</span><strong id="wechatStatTotal">—</strong></div>
@@ -242,7 +242,7 @@
           </div>
           <div class="discovery-last-run" id="wechatLastDiscovery">尚未进行主动拓源</div>
         </div>
-        <button class="button primary" type="button" data-wechat-discover {% if public_cloud %}disabled title="公众号主动拓源仍在本地完整版运行"{% endif %}>全网拓源一次</button>
+        <button class="button primary" type="button" data-wechat-discover {% if public_readonly %}disabled title="只读演示不运行联网拓源"{% endif %}>全网拓源一次</button>
       </section>
 
       <div class="pool-tabs" role="tablist" aria-label="公众号文章库操作">

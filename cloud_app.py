@@ -73,6 +73,8 @@ def _prepare_cloud_runtime() -> str:
     else:
         if os.getenv("DEALSCOPE_PUBLIC_RSS_ONLY", "").strip() != "1":
             raise RuntimeError("public_live requires DEALSCOPE_PUBLIC_RSS_ONLY=1")
+        if os.getenv("DEALSCOPE_PUBLIC_EXA_MCP", "").strip() != "1":
+            raise RuntimeError("public_live requires DEALSCOPE_PUBLIC_EXA_MCP=1")
         os.environ["DEALSCOPE_ALLOW_PUBLIC_WECHAT_FALLBACK"] = "0"
         (ROOT / "data" / "output").mkdir(parents=True, exist_ok=True)
     return mode

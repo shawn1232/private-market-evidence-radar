@@ -421,13 +421,14 @@
       const message = data.message || (data.queued ? '拓源任务已启动，发现结果会陆续进入文章库。' : '本轮主动拓源已完成。');
       showToast(message);
       if (dialog?.open) setWechatMessage(`${message} 发现只是线索；未取得正文或真实发布日期不会进入七日评分。`);
-      await loadWechatPool({ summaryOnly: true });
-      if (data.queued) window.setTimeout(() => loadWechatPool({ summaryOnly: true }), 2500);
+      await loadWechatPool();
+      if (data.queued) window.setTimeout(() => loadWechatPool(), 2500);
     } catch (error) {
       if (wechatDiscoverySummary) {
         wechatDiscoverySummary.textContent = previousSummary || '全网发现：服务暂不可用';
       }
-      const message = `${error.message}；仍可粘贴原文或导入历史文件。`;
+      const followup = publicCloud ? '；请稍后重试，已发现文章不会丢失。' : '；仍可粘贴原文或导入历史文件。';
+      const message = `${error.message}${followup}`;
       showToast(message, true);
       if (dialog?.open) setWechatMessage(message, true);
     } finally {

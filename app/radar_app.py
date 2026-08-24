@@ -188,12 +188,13 @@ def enforce_local_request():
     if _public_live_mode():
         if request.method in {"GET", "HEAD", "OPTIONS"}:
             return None
-        if request.method == "POST" and request.endpoint == "api_refresh" and _same_origin_request():
+        allowed_public_posts = {"api_refresh", "api_wechat_discover"}
+        if request.method == "POST" and request.endpoint in allowed_public_posts and _same_origin_request():
             return None
         return jsonify(
             {
                 "ok": False,
-                "message": "公开在线版仅允许同源触发受冷却保护的 RSS 更新；导入、删除和登录仍只在本地完整版开放。",
+                "message": "公开在线版仅允许同源触发受冷却保护的 RSS 更新与预设公众号拓源；导入、删除和登录仍只在本地完整版开放。",
             }
         ), 403
 
@@ -668,7 +669,7 @@ def _read_wechat_upload() -> tuple[bytes, str]:
 
 @app.get("/api/wechat/pool")
 def api_wechat_pool():
-    if _public_cloud_mode():
+    if _public_readonly_mode():
         empty_stats = {
             "total": 0,
             "pool_total": 0,
@@ -782,7 +783,7 @@ def api_wechat_urls():
 def api_wechat_discover():
     """Run credential-free public-web discovery and persist leads locally."""
 
-    result = discover_wechat_sources(force=True, pool=_get_wechat_pool())
+    result = discover_wechat_sources(force=not _public_live_mode(), pool=_get_wechat_pool())
     status = str(result.get("status") or "error")
     payload = {
         "ok": bool(result.get("ok")),

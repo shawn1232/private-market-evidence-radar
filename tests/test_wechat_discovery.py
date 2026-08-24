@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from wechat_discovery import (
+    ExaMcpHttpBackend,
     McporterExaBackend,
     SearchBackendError,
     build_config_query_plan,
@@ -36,6 +39,27 @@ class FakeBackend:
         if isinstance(response, BaseException):
             raise response
         return response
+
+
+class FakeHttpResponse:
+    def __init__(self, body, *, status=200, headers=None):
+        self.status_code = status
+        self.content = body.encode("utf-8") if isinstance(body, str) else bytes(body)
+        self.headers = dict(headers or {})
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(f"HTTP {self.status_code}")
+
+
+class FakeHttpSession:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def post(self, url, **kwargs):
+        self.calls.append((url, kwargs))
+        return self.responses.pop(0)
 
 
 class WeChatDiscoveryTests(unittest.TestCase):
@@ -199,6 +223,75 @@ class WeChatDiscoveryTests(unittest.TestCase):
         self.assertFalse(captured["kwargs"]["shell"])
         self.assertEqual(ARTICLE_B, rows[0]["url"])
         self.assertEqual("Article title", rows[0]["title"])
+
+    def test_exa_mcp_http_backend_initializes_session_and_parses_utf8_sse(self):
+        init_body = 'event: message\ndata: {"result":{"protocolVersion":"2025-03-26"},"jsonrpc":"2.0","id":1}\n\n'
+        tool_text = "\n".join(
+            [
+                "Title: 新发现公众号文章",
+                f"URL: {ARTICLE_B}",
+                "Published: N/A",
+                "Author: 新来源账号",
+                "Highlights: 仅为搜索线索",
+            ]
+        )
+        tool_body = "event: message\ndata: " + json.dumps(
+            {"result": {"content": [{"type": "text", "text": tool_text}]}, "jsonrpc": "2.0", "id": 2},
+            ensure_ascii=False,
+        ) + "\n\n"
+        session = FakeHttpSession(
+            [
+                FakeHttpResponse(
+                    init_body,
+                    headers={"Content-Type": "text/event-stream", "mcp-session-id": "session-1"},
+                ),
+                FakeHttpResponse(b"", status=202),
+                FakeHttpResponse(tool_body, headers={"Content-Type": "text/event-stream"}),
+            ]
+        )
+        backend = ExaMcpHttpBackend(session=session, timeout=5)
+
+        rows = backend.search("site:mp.weixin.qq.com/s 芯片 融资", limit=3)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual("新发现公众号文章", rows[0]["title"])
+        self.assertEqual("新来源账号", rows[0]["author"])
+        self.assertEqual(ARTICLE_B, rows[0]["url"])
+        self.assertEqual(3, len(session.calls))
+        init_headers = session.calls[0][1]["headers"]
+        call_headers = session.calls[2][1]["headers"]
+        self.assertNotIn("Mcp-Session-Id", init_headers)
+        self.assertEqual("session-1", call_headers["Mcp-Session-Id"])
+        arguments = session.calls[2][1]["json"]["params"]["arguments"]
+        self.assertEqual(3, arguments["numResults"])
+        self.assertIn("site:mp.weixin.qq.com/s", arguments["query"])
+
+    def test_public_exa_profile_is_bounded_and_uses_http_transport(self):
+        payload = {
+            "window_days": 7,
+            "wechat_discovery": {
+                "enabled": True,
+                "provider": "mcporter_exa",
+                "interval_hours": 1,
+                "max_queries_per_run": 30,
+                "num_results_per_query": 50,
+                "max_new_urls_per_run": 100,
+                "timeout_seconds": 120,
+                "queries": [{"name": "one", "query": "芯片 融资"}],
+            },
+        }
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "config.json"
+            path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+            with patch.dict(os.environ, {"DEALSCOPE_PUBLIC_EXA_MCP": "1"}):
+                settings = load_discovery_config(path)
+
+        self.assertEqual("exa_mcp_http", settings["provider"])
+        self.assertEqual(6.0, settings["interval_hours"])
+        self.assertEqual(3, settings["max_queries_per_run"])
+        self.assertEqual(8, settings["num_results_per_query"])
+        self.assertEqual(24, settings["max_new_urls_per_run"])
+        self.assertEqual(30.0, settings["timeout_seconds"])
 
     def test_result_normalizer_handles_nested_mcp_text_without_claim_fields(self):
         rows = normalize_search_results(

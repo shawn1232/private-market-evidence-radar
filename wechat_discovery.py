@@ -15,9 +15,12 @@ from typing import Any, Protocol
 from urllib.parse import parse_qsl, unquote, urlsplit
 import inspect
 import json
+import os
 import re
 import shutil
 import subprocess
+
+import requests
 
 from wechat_source_pool import canonicalize_wechat_url
 
@@ -221,7 +224,7 @@ def load_discovery_config(config_path: str | Path | None = None) -> dict[str, An
         if query_rows:
             query_source = "google_news_queries"
 
-    return {
+    settings = {
         "enabled": _boolean(block.get("enabled"), True),
         "provider": _text(block.get("provider"), 80) or "mcporter_exa",
         "interval_hours": _bounded_float(block.get("interval_hours"), 24.0, 0.25, 720.0),
@@ -237,6 +240,16 @@ def load_discovery_config(config_path: str | Path | None = None) -> dict[str, An
         "queries": query_rows,
         "query_source": query_source,
     }
+    if os.getenv("DEALSCOPE_PUBLIC_EXA_MCP", "").strip() == "1":
+        settings.update(
+            provider="exa_mcp_http",
+            interval_hours=max(6.0, float(settings["interval_hours"])),
+            max_queries_per_run=min(3, int(settings["max_queries_per_run"])),
+            num_results_per_query=min(8, int(settings["num_results_per_query"])),
+            max_new_urls_per_run=min(24, int(settings["max_new_urls_per_run"])),
+            timeout_seconds=min(30.0, float(settings["timeout_seconds"])),
+        )
+    return settings
 
 
 def _calendar_date(value: Any = None) -> date:
@@ -612,6 +625,147 @@ class McporterExaBackend:
         return parse_mcporter_output(completed.stdout)
 
 
+def _mcp_message(response: requests.Response) -> dict[str, Any]:
+    if len(response.content) > 2 * 1024 * 1024:
+        raise SearchBackendError("backend_response_too_large", "Exa MCP response exceeded 2MB")
+    try:
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise SearchBackendError("backend_failed", _safe_error(exc), retriable=True) from exc
+    text = response.content.decode("utf-8", errors="replace").strip()
+    if not text:
+        return {}
+    if "application/json" in str(response.headers.get("Content-Type") or "").lower():
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise SearchBackendError("backend_invalid_response", "Exa MCP returned invalid JSON") from exc
+        return dict(payload) if isinstance(payload, Mapping) else {}
+    for line in text.splitlines():
+        if not line.startswith("data:"):
+            continue
+        try:
+            payload = json.loads(line[5:].strip())
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, Mapping):
+            return dict(payload)
+    raise SearchBackendError("backend_invalid_response", "Exa MCP returned no JSON-RPC message")
+
+
+class ExaMcpHttpBackend:
+    """Bounded, credential-free Exa MCP client for the public cloud profile."""
+
+    provider = "exa"
+    transport = "mcp_http"
+    protocol_version = "2025-03-26"
+
+    def __init__(
+        self,
+        endpoint: str = "https://mcp.exa.ai/mcp",
+        *,
+        timeout: float = 30.0,
+        session: requests.Session | None = None,
+    ) -> None:
+        parsed = urlsplit(endpoint)
+        if parsed.scheme != "https" or (parsed.hostname or "").lower() != "mcp.exa.ai":
+            raise ValueError("Exa MCP endpoint must be https://mcp.exa.ai/mcp")
+        self.endpoint = endpoint
+        self.timeout = max(1.0, min(float(timeout), 45.0))
+        self._session = session or requests.Session()
+        self._session_id = ""
+        self._request_id = 0
+
+    def _headers(self) -> dict[str, str]:
+        headers = {
+            "Accept": "application/json, text/event-stream",
+            "Content-Type": "application/json",
+            "MCP-Protocol-Version": self.protocol_version,
+            "User-Agent": "DealScope-Evidence-Radar/1.0",
+        }
+        if self._session_id:
+            headers["Mcp-Session-Id"] = self._session_id
+        return headers
+
+    def _next_id(self) -> int:
+        self._request_id += 1
+        return self._request_id
+
+    def _initialize(self) -> None:
+        if self._session_id:
+            return
+        request_id = self._next_id()
+        payload = {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": self.protocol_version,
+                "capabilities": {},
+                "clientInfo": {"name": "dealscope", "version": "1.0"},
+            },
+        }
+        try:
+            response = self._session.post(
+                self.endpoint,
+                headers=self._headers(),
+                json=payload,
+                timeout=self.timeout,
+            )
+        except requests.RequestException as exc:
+            raise SearchBackendError("backend_unavailable", _safe_error(exc), retriable=True) from exc
+        message = _mcp_message(response)
+        if message.get("error") or not isinstance(message.get("result"), Mapping):
+            raise SearchBackendError("backend_failed", _safe_error(message.get("error")))
+        self._session_id = str(response.headers.get("mcp-session-id") or "").strip()
+        if not self._session_id:
+            raise SearchBackendError("backend_invalid_response", "Exa MCP omitted its session id")
+        notification = {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}}
+        try:
+            acknowledged = self._session.post(
+                self.endpoint,
+                headers=self._headers(),
+                json=notification,
+                timeout=self.timeout,
+            )
+            if acknowledged.status_code not in {200, 202, 204}:
+                _mcp_message(acknowledged)
+        except requests.RequestException as exc:
+            raise SearchBackendError("backend_unavailable", _safe_error(exc), retriable=True) from exc
+
+    def search(self, query: str, *, limit: int = DEFAULT_RESULTS_PER_QUERY) -> list[dict[str, Any]]:
+        self._initialize()
+        count = max(1, min(int(limit), MAX_RESULT_COUNT))
+        request_id = self._next_id()
+        payload = {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "method": "tools/call",
+            "params": {
+                "name": "web_search_exa",
+                "arguments": {"query": _text(query, 2_000), "numResults": count},
+            },
+        }
+        try:
+            response = self._session.post(
+                self.endpoint,
+                headers=self._headers(),
+                json=payload,
+                timeout=self.timeout,
+            )
+        except requests.Timeout as exc:
+            raise SearchBackendError("backend_timeout", "Exa MCP search timed out", retriable=True) from exc
+        except requests.RequestException as exc:
+            raise SearchBackendError("backend_unavailable", _safe_error(exc), retriable=True) from exc
+        message = _mcp_message(response)
+        if message.get("error"):
+            raise SearchBackendError("backend_failed", _safe_error(message.get("error")), retriable=True)
+        result = message.get("result")
+        if not isinstance(result, Mapping):
+            raise SearchBackendError("backend_invalid_response", "Exa MCP returned no tool result")
+        return normalize_search_results(result)
+
+
 def _backend_provider(backend: Any) -> str:
     provider = _text(getattr(backend, "provider", ""), 80)
     if provider:
@@ -792,7 +946,7 @@ def discover_wechat_articles(
 
     if search_backend is None:
         provider_key = str(settings["provider"]).strip().casefold().replace("-", "_")
-        if provider_key not in {"exa", "mcporter", "mcporter_exa"}:
+        if provider_key not in {"exa", "mcporter", "mcporter_exa", "exa_mcp_http"}:
             error = {
                 "type": "search_backend_error",
                 "code": "unsupported_provider",
@@ -817,7 +971,10 @@ def discover_wechat_articles(
                     "all results remain discovery_only and are ineligible for evidence scoring."
                 ),
             }
-        backend = McporterExaBackend(timeout=float(settings["timeout_seconds"]))
+        if provider_key == "exa_mcp_http":
+            backend = ExaMcpHttpBackend(timeout=float(settings["timeout_seconds"]))
+        else:
+            backend = McporterExaBackend(timeout=float(settings["timeout_seconds"]))
     else:
         backend = search_backend
     default_provider = _backend_provider(backend)
@@ -1014,6 +1171,7 @@ discover = discover_wechat_articles
 
 __all__ = [
     "DEFAULT_CONFIG_PATH",
+    "ExaMcpHttpBackend",
     "McporterExaBackend",
     "SearchBackend",
     "SearchBackendError",
