@@ -3,7 +3,7 @@
 > **中文：** 一个把公开搜索线索、原文证据与结构化初筛严格分开的本地优先研究工作流。<br>
 > **English:** An evidence-first, local-first workflow that keeps public-search leads, source documents, and structured screening strictly separated.
 
-`Python 3.12` · `Flask` · `SQLite` · `Playwright` · `107 automated tests`
+`Python 3.12` · `Flask` · `SQLite` · `Playwright` · `Docker` · `110 automated tests`
 
 DealScope 面向一级市场项目初筛。它不尝试“自动给出投资答案”，而是先回答两个更可审计的问题：**最近发生了什么？现有材料足以支持哪些判断？**
 
@@ -11,9 +11,9 @@ DealScope 面向一级市场项目初筛。它不尝试“自动给出投资答�
 
 ## 在线体验
 
-**[打开 DealScope 只读在线演示 →](https://shawn1232.github.io/private-market-evidence-radar/)**
+**[打开 DealScope 真实 Flask 在线工作台 →](https://dealscope-evidence-radar-production.up.railway.app/)**
 
-在线站点由 GitHub Pages 静态托管，包含“周度雷达、主动拓源、证据深评”三个可交互视图；无需登录、无需后端，且只使用纯合成数据。
+在线体验运行仓库中的真实 Flask 页面、路由与数据标准化逻辑，不是重新仿制的静态页面。周度雷达与证据评估工作台通过同一域名连接；无需登录，固定使用经过启动校验的纯合成数据。为保护个人登录态、研究数据与服务器资源，匿名公网访问仅开放读取和页面交互，联网抓取、文件写入与平台登录仍保留在本地完整版。
 
 ![DealScope synthetic weekly evidence radar](docs/assets/dealscope-radar-synthetic.png)
 
@@ -134,7 +134,7 @@ python app/app.py
 python -m unittest discover -s tests -v
 ```
 
-当前测试集共 **107 项**，重点覆盖“错误信息不能越过证据边界”，包括：
+当前测试集共 **110 项**，重点覆盖“错误信息不能越过证据边界”，包括：
 
 - 搜索摘要、未来日期和抓取时间不得制造时效性证据；
 - 私网地址、危险重定向、非文本与超大响应必须被拒绝；
