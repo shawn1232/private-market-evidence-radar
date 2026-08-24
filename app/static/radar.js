@@ -1,4 +1,5 @@
 (() => {
+  const publicReadonly = document.body.dataset.publicReadonly === 'true';
   const refreshButton = document.querySelector('#refreshButton');
   const refreshLabel = document.querySelector('#refreshLabel');
   const toast = document.querySelector('#toast');
@@ -60,7 +61,7 @@
 
   function setRefreshing(active) {
     if (!refreshButton) return;
-    refreshButton.disabled = active;
+    refreshButton.disabled = publicReadonly || active;
     refreshButton.classList.toggle('is-loading', active);
     refreshLabel.textContent = active ? '正在寻找本周变化…' : '更新近 7 天';
   }
@@ -343,12 +344,14 @@
         const status = ['ready', 'pending', 'failed', 'invalid', 'discovered'].includes(rawStatus) ? rawStatus : 'pending';
         appendCell(row, statusLabel(rawStatus), `pool-status status-${status}`);
         const actionCell = document.createElement('td');
-        const removeButton = document.createElement('button');
-        removeButton.type = 'button';
-        removeButton.className = 'pool-remove';
-        removeButton.textContent = '移出';
-        removeButton.addEventListener('click', () => removeWechatArticle(poolRowValue(item, ['article_id', 'id'])));
-        actionCell.appendChild(removeButton);
+        if (!publicReadonly) {
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'pool-remove';
+          removeButton.textContent = '移出';
+          removeButton.addEventListener('click', () => removeWechatArticle(poolRowValue(item, ['article_id', 'id'])));
+          actionCell.appendChild(removeButton);
+        }
         row.appendChild(actionCell);
         wechatPoolRows.appendChild(row);
       });

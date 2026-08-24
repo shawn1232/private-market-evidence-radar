@@ -35,7 +35,9 @@ from wechat_source_pool import WeChatSourcePool  # noqa: E402
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
-DEEP_WORKBENCH_HOME_URL = "http://127.0.0.1:8787/"
+LOCAL_DEEP_WORKBENCH_HOME_URL = "http://127.0.0.1:8787/"
+# Backward-compatible public constant used by the local test and launcher contract.
+DEEP_WORKBENCH_HOME_URL = LOCAL_DEEP_WORKBENCH_HOME_URL
 _refresh_lock = threading.Lock()
 _SHANGHAI_TZ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 _SUCCESSFUL_REFRESH_STATES = {"ok", "partial", "empty"}
@@ -48,6 +50,15 @@ _runtime_state: dict[str, Any] = {
 }
 _wechat_pool: WeChatSourcePool | None = None
 _wechat_pool_lock = threading.Lock()
+
+
+def _public_readonly_mode() -> bool:
+    return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_readonly"
+
+
+def _workbench_home_url() -> str:
+    configured = os.getenv("DEALSCOPE_DEEP_BASE_URL", "").strip()
+    return configured or LOCAL_DEEP_WORKBENCH_HOME_URL
 
 
 def _get_wechat_pool() -> WeChatSourcePool:
@@ -144,7 +155,17 @@ def _wechat_public_row(row: dict[str, Any]) -> dict[str, Any]:
 
 
 @app.before_request
-def enforce_local_request() -> None:
+def enforce_local_request():
+    if _public_readonly_mode():
+        if request.method in {"GET", "HEAD", "OPTIONS"}:
+            return None
+        return jsonify(
+            {
+                "ok": False,
+                "message": "公开在线版为只读演示；联网刷新、导入和写入功能请在本地完整版使用。",
+            }
+        ), 403
+
     remote = (request.remote_addr or "").split("%", 1)[0]
     if remote not in {"127.0.0.1", "::1"}:
         abort(403)
@@ -278,7 +299,7 @@ def _normalize_candidate(raw: Any, rank: int) -> dict[str, Any]:
     company_name = _first_text(
         item.get("company_name"), item.get("company"), item.get("entity"), default="主体待确认"
     )
-    workbench_url = f"{DEEP_WORKBENCH_HOME_URL}?{urlencode({'q': company_name, 'company': company_name})}"
+    workbench_url = f"{_workbench_home_url()}?{urlencode({'q': company_name, 'company': company_name})}"
 
     return {
         "rank": rank,
@@ -505,12 +526,21 @@ def index():
         "radar.html",
         report=report,
         runtime=_runtime_state,
-        workbench_home_url=DEEP_WORKBENCH_HOME_URL,
+        workbench_home_url=_workbench_home_url(),
+        public_readonly=_public_readonly_mode(),
     )
 
 
 @app.get("/health")
 def health():
+    if _public_readonly_mode():
+        return jsonify(
+            {
+                "ok": True,
+                "service": "WeeklyProjectRadar",
+                "mode": "public_readonly",
+            }
+        )
     return jsonify(
         {
             "ok": True,
@@ -558,6 +588,36 @@ def _read_wechat_upload() -> tuple[bytes, str]:
 
 @app.get("/api/wechat/pool")
 def api_wechat_pool():
+    if _public_readonly_mode():
+        empty_stats = {
+            "total": 0,
+            "pool_total": 0,
+            "account_count": 0,
+            "in_window": 0,
+            "ready": 0,
+            "pending": 0,
+            "failed": 0,
+            "ready_in_window": 0,
+            "pending_in_window": 0,
+            "failed_in_window": 0,
+            "last_import_at": "",
+            "discovered_total": 0,
+            "discovered_accounts": 0,
+            "discovered_in_window": 0,
+            "last_discovery_at": "",
+        }
+        return jsonify(
+            {
+                "ok": True,
+                "scope": "all",
+                "stats": empty_stats,
+                "total": 0,
+                "offset": 0,
+                "limit": 50,
+                "rows": [],
+                "public_readonly": True,
+            }
+        )
     scope = str(request.args.get("scope") or "all").strip().lower()
     if scope not in {"all", "window", "pending", "failed", "discovered"}:
         return jsonify({"ok": False, "message": "不支持的文章库筛选条件。"}), 400

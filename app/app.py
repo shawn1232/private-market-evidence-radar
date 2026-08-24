@@ -38,9 +38,23 @@ _pipeline_state: dict[str, Any] = {
 }
 
 
+def _public_readonly_mode() -> bool:
+    return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_readonly"
+
+
+def _radar_home_url() -> str:
+    configured = os.getenv("DEALSCOPE_RADAR_BASE_URL", "").strip()
+    return configured or "http://127.0.0.1:8791/"
+
+
 @app.before_request
-def enforce_local_request() -> None:
-    """Keep mutating actions local even if a web page tries to call localhost."""
+def enforce_local_request():
+    """Keep local mode loopback-only and public mode strictly read-only."""
+    if _public_readonly_mode():
+        if request.method in {"GET", "HEAD", "OPTIONS"}:
+            return None
+        abort(403)
+
     remote = (request.remote_addr or "").split("%", 1)[0]
     if remote not in {"127.0.0.1", "::1"}:
         abort(403)
@@ -746,7 +760,7 @@ th {
 }
 </style>
 </head>
-<body data-pipeline-running="{{ 'true' if pipeline_runtime.running else 'false' }}">
+<body data-pipeline-running="{{ 'true' if pipeline_runtime.running else 'false' }}" data-public-readonly="{{ 'true' if public_readonly else 'false' }}">
 <div class="page">
   <section class="hero">
     <div class="hero-top">
@@ -788,18 +802,24 @@ th {
         </label>
       </div>
       <div class="actions">
-        <a class="btn-link btn-secondary" href="http://127.0.0.1:8791/">← 返回证据雷达</a>
-        <button class="btn btn-primary" type="submit" formaction="{{ url_for('generate_links') }}">生成发现链接</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('save_manual_urls_route') }}">保存原文链接</button>
-        <button class="btn btn-primary" id="runPipelineButton" type="submit" formaction="{{ url_for('run_pipeline_route') }}" {% if pipeline_runtime.running %}disabled{% endif %}>{{ '正在后台评估…' if pipeline_runtime.running else '运行采集与评分' }}</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('open_input') }}">打开 urls.txt</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('open_project') }}">打开项目目录</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='xiaohongshu') }}">登录小红书</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='zsxq') }}">登录知识星球</button>
-        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='weixin') }}">登录公众号</button>
+        <a class="btn-link btn-secondary" href="{{ radar_home_url }}">← 返回证据雷达</a>
+        <button class="btn btn-primary" type="submit" formaction="{{ url_for('generate_links') }}" {% if public_readonly %}disabled title="公开在线版为只读演示"{% endif %}>生成发现链接</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('save_manual_urls_route') }}" {% if public_readonly %}disabled title="公开在线版不写入文件"{% endif %}>保存原文链接</button>
+        <button class="btn btn-primary" id="runPipelineButton" type="submit" formaction="{{ url_for('run_pipeline_route') }}" {% if pipeline_runtime.running or public_readonly %}disabled{% endif %} title="{{ '公开在线版不接受匿名抓取任务' if public_readonly else '' }}">{{ '正在后台评估…' if pipeline_runtime.running else '运行采集与评分' }}</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('open_input') }}" {% if public_readonly %}disabled title="仅本地完整版可用"{% endif %}>打开 urls.txt</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('open_project') }}" {% if public_readonly %}disabled title="仅本地完整版可用"{% endif %}>打开项目目录</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='xiaohongshu') }}" {% if public_readonly %}disabled title="个人登录态不会部署到公网"{% endif %}>登录小红书</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='zsxq') }}" {% if public_readonly %}disabled title="个人登录态不会部署到公网"{% endif %}>登录知识星球</button>
+        <button class="btn btn-secondary" type="submit" formaction="{{ url_for('login_platform', platform='weixin') }}" {% if public_readonly %}disabled title="个人登录态不会部署到公网"{% endif %}>登录公众号</button>
       </div>
     </form>
   </section>
+
+  {% if public_readonly %}
+  <div class="banner" style="background:#eff6ff;border-color:#93c5fd;color:#1e40af;">
+    当前是由同一套 Flask 程序实时渲染的公开在线版。为保护个人登录态、研究数据和服务器资源，匿名访客只能查看合成数据；联网抓取、文件写入和平台登录仍保留在本地完整版。
+  </div>
+  {% endif %}
 
   {% if banner_message %}
   <div class="banner">{{ banner_message }}</div>
@@ -807,7 +827,11 @@ th {
 
   {% if report.is_demo %}
   <div class="banner" style="background:#fff7ed;border-color:#fdba74;color:#9a3412;">
+    {% if public_readonly %}
+    当前载入的是经过启动校验的合成数据，所有公司、引文和网址均为虚构内容，不对应真实项目。
+    {% else %}
     当前载入的是历史演示样例，其中含占位网址，不能作为真实项目判断。运行一次取得原文证据的评估后才会替换；没有合格证据时系统会保留旧文件但不会假装成功。
+    {% endif %}
   </div>
   {% endif %}
 
@@ -1223,7 +1247,7 @@ if (document.body.dataset.pipelineRunning === 'true') {
   const started = Date.now();
   const timer = window.setInterval(async () => {
     try {
-      const response = await fetch('/api/pipeline-status', { cache: 'no-store' });
+      const response = await fetch('{{ url_for("pipeline_status") }}', { cache: 'no-store' });
       const state = await response.json();
       if (!state.running) {
         window.clearInterval(timer);
@@ -1978,6 +2002,8 @@ def home():
         pipeline_runtime=dict(_pipeline_state),
         latest_attempt=latest_attempt if isinstance(latest_attempt, dict) else {},
         banner_message=message,
+        public_readonly=_public_readonly_mode(),
+        radar_home_url=_radar_home_url(),
         fmt=fmt,
     )
 
@@ -2149,6 +2175,12 @@ def open_project():
 
 @app.route("/health")
 def health():
+    if _public_readonly_mode():
+        return {
+            "ok": True,
+            "service": "DealScopeWorkbench",
+            "mode": "public_readonly",
+        }
     return {
         "ok": True,
         "service": "DealScopeWorkbench",
