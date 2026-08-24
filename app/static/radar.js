@@ -1,5 +1,6 @@
 (() => {
   const publicReadonly = document.body.dataset.publicReadonly === 'true';
+  const publicCloud = document.body.dataset.publicCloud === 'true';
   const refreshButton = document.querySelector('#refreshButton');
   const refreshLabel = document.querySelector('#refreshLabel');
   const toast = document.querySelector('#toast');
@@ -344,7 +345,7 @@
         const status = ['ready', 'pending', 'failed', 'invalid', 'discovered'].includes(rawStatus) ? rawStatus : 'pending';
         appendCell(row, statusLabel(rawStatus), `pool-status status-${status}`);
         const actionCell = document.createElement('td');
-        if (!publicReadonly) {
+        if (!publicCloud) {
           const removeButton = document.createElement('button');
           removeButton.type = 'button';
           removeButton.className = 'pool-remove';

@@ -60,6 +60,11 @@ _LEADING_NOISE = re.compile(
 )
 
 
+def _public_rss_only_mode() -> bool:
+    """Limit anonymous cloud refreshes to bounded, credential-free RSS queries."""
+    return os.getenv("DEALSCOPE_PUBLIC_RSS_ONLY", "").strip() == "1"
+
+
 def _shanghai_tz() -> tzinfo:
     """Return Shanghai time without requiring the optional Windows tzdata package."""
 
@@ -592,7 +597,8 @@ def _google_rss_url(query: str) -> str:
 def _fetch_google_query(query_item: dict[str, Any], timeout: float) -> list[dict[str, Any]]:
     response = None
     last_error: BaseException | None = None
-    for _attempt in range(2):
+    attempts = 1 if _public_rss_only_mode() else 2
+    for _attempt in range(attempts):
         try:
             response = requests.get(
                 _google_rss_url(str(query_item.get("query") or "")),
@@ -641,6 +647,8 @@ def _fetch_google_query(query_item: dict[str, Any], timeout: float) -> list[dict
 def _collect_google_news(config: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     queries = [item for item in config.get("google_news_queries", []) if item.get("query")]
     timeout = float(config.get("request_timeout_seconds", 12))
+    if _public_rss_only_mode():
+        timeout = min(timeout, 8.0)
     records: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
     succeeded = 0
@@ -992,6 +1000,8 @@ def _fetch_wechat_public_exporter(url: str, timeout: float) -> dict[str, Any]:
 
 
 def _public_wechat_fallback_enabled() -> bool:
+    if _public_rss_only_mode():
+        return False
     return os.getenv("DEALSCOPE_ALLOW_PUBLIC_WECHAT_FALLBACK", "").strip().casefold() in {
         "1", "true", "yes", "on",
     }
@@ -1575,6 +1585,8 @@ def load_cached_report() -> dict[str, Any]:
         required = {"window", "status", "source_status", "candidates", "empty_slots"}
         if not isinstance(payload, dict) or not required.issubset(payload):
             raise ValueError("缓存报告结构不完整")
+        if _public_rss_only_mode() and payload.get("synthetic") is True:
+            return _no_cache_report(config)
         return payload
     except Exception as exc:
         report = _no_cache_report(config)
@@ -1591,7 +1603,17 @@ def refresh_report(as_of: Any = None) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
     source_status: dict[str, Any] = {}
 
-    for name, collector in (("google_news", _collect_google_news), ("wechat", _collect_wechat)):
+    collectors = [("google_news", _collect_google_news)]
+    if _public_rss_only_mode():
+        source_status["wechat"] = {
+            "status": "skipped",
+            "reason": "公开云端刷新仅使用无凭据 RSS；公众号原文池仍在本地完整版维护。",
+            "evidence_policy": "未连接公众号正文时，不会用公众号标题或搜索摘要冒充原文证据。",
+        }
+    else:
+        collectors.append(("wechat", _collect_wechat))
+
+    for name, collector in collectors:
         try:
             if name == "wechat":
                 collected, status = collector(config, as_of=as_of_date)

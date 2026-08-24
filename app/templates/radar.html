@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d5b3e'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='25' font-family='Arial' font-weight='700' fill='white'%3EAI%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="{{ url_for('static', filename='radar.css') }}">
 </head>
-<body data-refreshing="{{ 'true' if runtime.refreshing else 'false' }}" data-candidate-count="{{ report.candidate_count }}" data-public-readonly="{{ 'true' if public_readonly else 'false' }}">
+<body data-refreshing="{{ 'true' if runtime.refreshing else 'false' }}" data-candidate-count="{{ report.candidate_count }}" data-public-readonly="{{ 'true' if public_readonly else 'false' }}" data-public-cloud="{{ 'true' if public_cloud else 'false' }}">
   <div class="page-shell">
     <header class="topbar">
       <div class="brand">
@@ -19,7 +19,7 @@
       </div>
       <div class="top-actions">
         <a class="button secondary" href="{{ workbench_home_url }}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;text-decoration:none;">证据评估工作台</a>
-        <button class="button secondary" type="button" data-open-wechat {% if public_readonly %}data-wechat-open-tab="library"{% endif %}><span id="wechatLibraryButtonLabel">公众号文章库</span></button>
+        <button class="button secondary" type="button" data-open-wechat {% if public_cloud %}data-wechat-open-tab="library"{% endif %}><span id="wechatLibraryButtonLabel">公众号文章库</span></button>
         <button class="button primary" id="refreshButton" type="button" {% if public_readonly %}disabled title="公开在线版不运行匿名联网刷新"{% endif %}>
           <span class="button-dot" aria-hidden="true"></span>
           <span id="refreshLabel">更新近 7 天</span>
@@ -28,13 +28,17 @@
     </header>
 
     <main>
-      {% if public_readonly %}
+      {% if public_cloud %}
       <section class="source-strip" style="margin-bottom:18px;border-color:#93c5fd;background:#eff6ff;">
         <div class="source-summary" style="color:#1e40af;">
           <span class="source-title">真实 Flask 在线版</span>
-          <span>页面、路由和数据标准化逻辑与本地工作台相同；公开访问固定使用合成数据。</span>
+          {% if public_live %}
+          <span>点击“更新近 7 天”会真正检索无凭据公开 RSS，并生成真实项目线索；所有结果均标记为待核验。</span>
+          {% else %}
+          <span>页面、路由和数据标准化逻辑与本地工作台相同；当前公开访问固定使用合成数据。</span>
+          {% endif %}
         </div>
-        <div class="source-note" style="color:#1e40af;">为保护个人账号、研究资料和服务器资源，联网抓取、导入、删除与登录仅在本地完整版开放。</div>
+        <div class="source-note" style="color:#1e40af;">个人账号、Cookie 和本地研究资料不会上传；公众号原文导入、删除与登录仍仅在本地完整版开放。</div>
       </section>
       {% endif %}
       <section class="thesis-panel">
@@ -86,7 +90,7 @@
           {% if wx_followup.get('queries_total') %}
           <span class="source-pill muted">公众号带动复核：{{ wx_followup.get('items_seen', 0) }} 条公开结果</span>
           {% endif %}
-          <button class="source-pill source-pill-button discovery-pill" type="button" data-wechat-discover {% if public_readonly %}disabled title="公开在线版不运行匿名联网拓源"{% endif %}>全网拓源一次</button>
+          <button class="source-pill source-pill-button discovery-pill" type="button" data-wechat-discover {% if public_cloud %}disabled title="公众号主动拓源仍在本地完整版运行"{% endif %}>全网拓源一次</button>
         </div>
         <div class="source-note">
           公众号来源由主动全网发现与手工补充共同构成；发现只是线索，未取得正文和真实发布日期不会进入七日评分。
@@ -215,7 +219,7 @@
       <button class="dialog-close" value="cancel" aria-label="关闭公众号文章库">×</button>
       <div class="section-kicker">WECHAT ARTICLE LIBRARY</div>
       <h2>公众号文章库</h2>
-      <p class="dialog-intro">{% if public_readonly %}当前公开在线版展示同一套公众号文章库界面与读取接口，数据固定为空的合成演示池；写入和联网拓源仅在本地完整版开放。{% else %}系统可以主动从全网发现公众号文章线索，也支持粘贴原文或导入 exporter 历史文件；七日雷达只使用已取得正文和真实发布日期的文章。{% endif %}</p>
+      <p class="dialog-intro">{% if public_cloud %}公开在线版不会上传你的公众号账号、Cookie 或历史文件，因此这里保持为空；公众号原文池、写入与主动拓源仍在本地完整版运行。{% else %}系统可以主动从全网发现公众号文章线索，也支持粘贴原文或导入 exporter 历史文件；七日雷达只使用已取得正文和真实发布日期的文章。{% endif %}</p>
 
       <div class="pool-stats" id="wechatPoolStats" aria-label="公众号文章库统计">
         <div class="pool-stat"><span>已收录</span><strong id="wechatStatTotal">—</strong></div>
@@ -238,28 +242,28 @@
           </div>
           <div class="discovery-last-run" id="wechatLastDiscovery">尚未进行主动拓源</div>
         </div>
-        <button class="button primary" type="button" data-wechat-discover {% if public_readonly %}disabled title="公开在线版不运行匿名联网拓源"{% endif %}>全网拓源一次</button>
+        <button class="button primary" type="button" data-wechat-discover {% if public_cloud %}disabled title="公众号主动拓源仍在本地完整版运行"{% endif %}>全网拓源一次</button>
       </section>
 
       <div class="pool-tabs" role="tablist" aria-label="公众号文章库操作">
-        <button class="pool-tab{% if not public_readonly %} active{% endif %}" id="wechatTabUrls" type="button" role="tab" aria-selected="{{ 'false' if public_readonly else 'true' }}" aria-controls="wechatPanelUrls" data-wechat-tab="urls" {% if public_readonly %}disabled{% endif %}>粘贴文章链接</button>
-        <button class="pool-tab" id="wechatTabImport" type="button" role="tab" aria-selected="false" aria-controls="wechatPanelImport" data-wechat-tab="import" {% if public_readonly %}disabled{% endif %}>导入历史文件</button>
-        <button class="pool-tab{% if public_readonly %} active{% endif %}" id="wechatTabLibrary" type="button" role="tab" aria-selected="{{ 'true' if public_readonly else 'false' }}" aria-controls="wechatPanelLibrary" data-wechat-tab="library">查看文章库</button>
+        <button class="pool-tab{% if not public_cloud %} active{% endif %}" id="wechatTabUrls" type="button" role="tab" aria-selected="{{ 'false' if public_cloud else 'true' }}" aria-controls="wechatPanelUrls" data-wechat-tab="urls" {% if public_cloud %}disabled{% endif %}>粘贴文章链接</button>
+        <button class="pool-tab" id="wechatTabImport" type="button" role="tab" aria-selected="false" aria-controls="wechatPanelImport" data-wechat-tab="import" {% if public_cloud %}disabled{% endif %}>导入历史文件</button>
+        <button class="pool-tab{% if public_cloud %} active{% endif %}" id="wechatTabLibrary" type="button" role="tab" aria-selected="{{ 'true' if public_cloud else 'false' }}" aria-controls="wechatPanelLibrary" data-wechat-tab="library">查看文章库</button>
       </div>
 
-      <section class="pool-panel" id="wechatPanelUrls" role="tabpanel" aria-labelledby="wechatTabUrls" data-wechat-panel="urls" {% if public_readonly %}hidden{% endif %}>
+      <section class="pool-panel" id="wechatPanelUrls" role="tabpanel" aria-labelledby="wechatTabUrls" data-wechat-panel="urls" {% if public_cloud %}hidden{% endif %}>
         <label for="wechatUrls">公众号文章链接（每行一个，最多 500 条）</label>
-        <textarea id="wechatUrls" rows="7" placeholder="https://mp.weixin.qq.com/s/..." {% if public_readonly %}disabled{% endif %}></textarea>
+        <textarea id="wechatUrls" rows="7" placeholder="https://mp.weixin.qq.com/s/..." {% if public_cloud %}disabled{% endif %}></textarea>
         <p class="field-help">加入文章库后，系统会在刷新雷达时读取标题、正文和真实发布日期；重复链接不会重复保存。</p>
         <div class="dialog-actions">
-          <button class="button primary" id="saveWechatButton" type="button" {% if public_readonly %}disabled{% endif %}>加入文章库</button>
+          <button class="button primary" id="saveWechatButton" type="button" {% if public_cloud %}disabled{% endif %}>加入文章库</button>
         </div>
       </section>
 
       <section class="pool-panel" id="wechatPanelImport" role="tabpanel" aria-labelledby="wechatTabImport" data-wechat-panel="import" hidden>
         <label for="wechatImportFile">exporter 历史文件</label>
         <div class="file-drop" id="wechatImportDrop">
-          <input id="wechatImportFile" type="file" accept=".json,.csv,application/json,text/csv" {% if public_readonly %}disabled{% endif %}>
+          <input id="wechatImportFile" type="file" accept=".json,.csv,application/json,text/csv" {% if public_cloud %}disabled{% endif %}>
           <strong>选择 JSON 或 CSV 文件</strong>
           <span>先预览识别结果，确认后才写入文章库；文件只在本机处理，不会上传到外部服务。</span>
         </div>
@@ -272,12 +276,12 @@
           <ul id="wechatImportIssues"></ul>
         </div>
         <div class="dialog-actions">
-          <button class="button secondary" id="previewWechatImportButton" type="button" {% if public_readonly %}disabled{% endif %}>预览文件</button>
+          <button class="button secondary" id="previewWechatImportButton" type="button" {% if public_cloud %}disabled{% endif %}>预览文件</button>
           <button class="button primary" id="confirmWechatImportButton" type="button" disabled>确认导入</button>
         </div>
       </section>
 
-      <section class="pool-panel" id="wechatPanelLibrary" role="tabpanel" aria-labelledby="wechatTabLibrary" data-wechat-panel="library" {% if not public_readonly %}hidden{% endif %}>
+      <section class="pool-panel" id="wechatPanelLibrary" role="tabpanel" aria-labelledby="wechatTabLibrary" data-wechat-panel="library" {% if not public_cloud %}hidden{% endif %}>
         <div class="pool-toolbar">
           <div class="pool-filters" role="group" aria-label="筛选文章">
             <button class="pool-filter active" type="button" data-wechat-scope="all">全部</button>
@@ -305,7 +309,7 @@
       </div>
       <div id="wechatMessage" class="form-message" role="status" aria-live="polite"></div>
       <div class="dialog-actions dialog-footer">
-        <button class="button secondary" id="refreshAfterWechatButton" type="button" hidden {% if public_readonly %}disabled{% endif %}>立即更新雷达</button>
+        <button class="button secondary" id="refreshAfterWechatButton" type="button" hidden {% if public_cloud %}disabled{% endif %}>立即更新雷达</button>
         <button class="button secondary" value="cancel">关闭</button>
       </div>
     </form>

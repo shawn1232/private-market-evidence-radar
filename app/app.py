@@ -42,6 +42,14 @@ def _public_readonly_mode() -> bool:
     return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_readonly"
 
 
+def _public_live_mode() -> bool:
+    return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_live"
+
+
+def _public_cloud_mode() -> bool:
+    return _public_readonly_mode() or _public_live_mode()
+
+
 def _radar_home_url() -> str:
     configured = os.getenv("DEALSCOPE_RADAR_BASE_URL", "").strip()
     return configured or "http://127.0.0.1:8791/"
@@ -50,7 +58,7 @@ def _radar_home_url() -> str:
 @app.before_request
 def enforce_local_request():
     """Keep local mode loopback-only and public mode strictly read-only."""
-    if _public_readonly_mode():
+    if _public_cloud_mode():
         if request.method in {"GET", "HEAD", "OPTIONS"}:
             return None
         abort(403)
@@ -817,7 +825,11 @@ th {
 
   {% if public_readonly %}
   <div class="banner" style="background:#eff6ff;border-color:#93c5fd;color:#1e40af;">
+    {% if public_live %}
+    当前是由同一套 Flask 程序实时渲染的公开在线版。周度雷达可从无凭据公开 RSS 实时更新真实线索；深评页的任意网址抓取、文件写入和平台登录仍只在本地完整版开放。
+    {% else %}
     当前是由同一套 Flask 程序实时渲染的公开在线版。为保护个人登录态、研究数据和服务器资源，匿名访客只能查看合成数据；联网抓取、文件写入和平台登录仍保留在本地完整版。
+    {% endif %}
   </div>
   {% endif %}
 
@@ -2002,7 +2014,8 @@ def home():
         pipeline_runtime=dict(_pipeline_state),
         latest_attempt=latest_attempt if isinstance(latest_attempt, dict) else {},
         banner_message=message,
-        public_readonly=_public_readonly_mode(),
+        public_readonly=_public_cloud_mode(),
+        public_live=_public_live_mode(),
         radar_home_url=_radar_home_url(),
         fmt=fmt,
     )
@@ -2175,11 +2188,11 @@ def open_project():
 
 @app.route("/health")
 def health():
-    if _public_readonly_mode():
+    if _public_cloud_mode():
         return {
             "ok": True,
             "service": "DealScopeWorkbench",
-            "mode": "public_readonly",
+            "mode": "public_live" if _public_live_mode() else "public_readonly",
         }
     return {
         "ok": True,

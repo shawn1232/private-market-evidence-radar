@@ -56,6 +56,25 @@ def _public_readonly_mode() -> bool:
     return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_readonly"
 
 
+def _public_live_mode() -> bool:
+    return os.getenv("DEALSCOPE_MODE", "").strip().lower() == "public_live"
+
+
+def _public_cloud_mode() -> bool:
+    return _public_readonly_mode() or _public_live_mode()
+
+
+def _same_origin_request() -> bool:
+    origin = request.headers.get("Origin", "").strip()
+    if not origin:
+        return False
+    try:
+        parsed = urlparse(origin)
+    except ValueError:
+        return False
+    return parsed.scheme in {"http", "https"} and parsed.netloc.casefold() == request.host.casefold()
+
+
 def _workbench_home_url() -> str:
     configured = os.getenv("DEALSCOPE_DEEP_BASE_URL", "").strip()
     return configured or LOCAL_DEEP_WORKBENCH_HOME_URL
@@ -163,6 +182,18 @@ def enforce_local_request():
             {
                 "ok": False,
                 "message": "公开在线版为只读演示；联网刷新、导入和写入功能请在本地完整版使用。",
+            }
+        ), 403
+
+    if _public_live_mode():
+        if request.method in {"GET", "HEAD", "OPTIONS"}:
+            return None
+        if request.method == "POST" and request.endpoint == "api_refresh" and _same_origin_request():
+            return None
+        return jsonify(
+            {
+                "ok": False,
+                "message": "公开在线版仅允许同源触发受冷却保护的 RSS 更新；导入、删除和登录仍只在本地完整版开放。",
             }
         ), 403
 
@@ -428,6 +459,35 @@ def _normalize_report(raw: Any, today: date | None = None) -> dict[str, Any]:
 
 
 def _refresh_now() -> dict[str, Any]:
+    if _public_live_mode():
+        cached = load_cached_report()
+        raw_generated = str(cached.get("generated_at") or "").strip()
+        if raw_generated and cached.get("synthetic") is not True:
+            try:
+                generated = datetime.fromisoformat(raw_generated.replace("Z", "+00:00"))
+                if generated.tzinfo is None:
+                    generated = generated.replace(tzinfo=_SHANGHAI_TZ)
+                cooldown = max(60, min(int(os.getenv("DEALSCOPE_REFRESH_COOLDOWN_SECONDS", "900")), 3600))
+                age_seconds = int((datetime.now(timezone.utc) - generated.astimezone(timezone.utc)).total_seconds())
+                if 0 <= age_seconds < cooldown:
+                    normalized = _normalize_report(cached)
+                    retry_after = cooldown - age_seconds
+                    return {
+                        "ok": True,
+                        "busy": False,
+                        "cached": True,
+                        "run_state": normalized["run_state"],
+                        "candidate_count": normalized["candidate_count"],
+                        "message": f"数据已是最新；约 {max(1, (retry_after + 59) // 60)} 分钟后可再次联网更新。",
+                        "data_as_of": normalized["data_as_of"],
+                        "cache_age_days": normalized["cache_age_days"],
+                        "is_stale": normalized["is_stale"],
+                        "retry_after_seconds": retry_after,
+                        "last_attempt": _runtime_state.get("last_attempt") or {},
+                    }
+            except (TypeError, ValueError, OverflowError):
+                pass
+
     if not _refresh_lock.acquire(blocking=False):
         return {
             "ok": False,
@@ -528,17 +588,21 @@ def index():
         runtime=_runtime_state,
         workbench_home_url=_workbench_home_url(),
         public_readonly=_public_readonly_mode(),
+        public_live=_public_live_mode(),
+        public_cloud=_public_cloud_mode(),
     )
 
 
 @app.get("/health")
 def health():
-    if _public_readonly_mode():
+    if _public_cloud_mode():
         return jsonify(
             {
                 "ok": True,
                 "service": "WeeklyProjectRadar",
-                "mode": "public_readonly",
+                "mode": "public_live" if _public_live_mode() else "public_readonly",
+                "refreshing": bool(_runtime_state["refreshing"]),
+                "last_finished_at": str(_runtime_state["last_finished_at"] or ""),
             }
         )
     return jsonify(
@@ -588,7 +652,7 @@ def _read_wechat_upload() -> tuple[bytes, str]:
 
 @app.get("/api/wechat/pool")
 def api_wechat_pool():
-    if _public_readonly_mode():
+    if _public_cloud_mode():
         empty_stats = {
             "total": 0,
             "pool_total": 0,
@@ -615,7 +679,8 @@ def api_wechat_pool():
                 "offset": 0,
                 "limit": 50,
                 "rows": [],
-                "public_readonly": True,
+                "public_readonly": _public_readonly_mode(),
+                "public_live": _public_live_mode(),
             }
         )
     scope = str(request.args.get("scope") or "all").strip().lower()
