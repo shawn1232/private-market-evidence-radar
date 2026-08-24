@@ -22,8 +22,12 @@ class CloudApplicationTests(unittest.TestCase):
             },
         )
         cls.environment.start()
-        module = importlib.import_module("cloud_app")
-        cls.client = Client(module.application, Response)
+        try:
+            module = importlib.import_module("cloud_app")
+            cls.client = Client(module.application, Response)
+        except Exception:
+            cls.environment.stop()
+            raise
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -53,8 +57,10 @@ class CloudApplicationTests(unittest.TestCase):
         report = self.client.get("/api/report", environ_base={"REMOTE_ADDR": "203.0.113.8"})
         self.assertEqual(report.status_code, 200)
         payload = report.get_json()
-        self.assertTrue(payload["is_demo"])
+        self.assertTrue(payload["candidates"])
         self.assertTrue(all("虚构" in row["company_name"] for row in payload["candidates"]))
+        self.assertTrue(all(row["publisher_type"] == "synthetic_fixture" for row in payload["candidates"]))
+        self.assertTrue(all(".invalid/" in row["source_url"] for row in payload["candidates"]))
 
         pool = self.client.get("/api/wechat/pool", environ_base={"REMOTE_ADDR": "203.0.113.8"})
         self.assertEqual(pool.status_code, 200)
